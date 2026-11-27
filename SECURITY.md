@@ -47,6 +47,8 @@ and protecting a user from a compromised browser or extension.
 ## Security decisions in this repository
 
 - No analytics, telemetry, or third-party scripts.
+- Reading state, the mindful timer, open history, and preferences are local to
+  the browser. They are not transmitted.
 - No public CORS proxy is shipped or recommended.
 - Direct feed fetching is credential-free (`credentials: "omit"`).
 - The production CSP is injected at build time (see `vite.config.ts`).

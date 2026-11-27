@@ -14,11 +14,25 @@ Shipped in this repository.
 
 Not in v0.1.0: real feed fetching. The board uses in-world demo posts.
 
+## v0.1.1 — board sections and mindful pass
+
+Shipped after the first UI demo.
+
+- Four sections: Board, Saved, Sources, History.
+- Bottom-right filter with All / Unread / Read plus source scope.
+- Mindful timer replacing the level/XP readout; cap, refill, Unlimited.
+- Adaptive `Load more` at roughly five board viewports; no infinite scroll.
+- Opening a post marks it read, files it in History, and allows saving.
+- Opt-in read-on-scroll with a full-card dwell.
+- Source identity on cards; Proxy sheet for preferences.
+- Red tab alerts use the game's warning triangle.
+
 ## v0.2.0 — feed core
 
 - RSS 2.0, Atom, RDF, and JSON Feed parsing.
 - Direct transport with time/size limits and useful error classes.
-- Feed manager: add, remove, refresh, error state.
+- Feed manager: add, remove, refresh, error state. The Sources section becomes
+  the real manager.
 - Add-feed discovery from an HTML page (`<link rel="alternate">`).
 - IndexedDB article cache; read/starred state; unread counts.
 - OPML import/export.
@@ -54,6 +68,8 @@ Not in v0.1.0: real feed fetching. The board uses in-world demo posts.
 - A hosted SaaS, accounts, billing, or multi-tenant sync.
 - A public CORS proxy or a feed-fetching backend in this repository.
 - Voting, posting, or moderation actions on Lemmy or other fediverse services.
+- Infinite scroll, engagement ranking, or a feed that optimizes for time on
+  site. The board is a reading surface, not a timeline.
 - Shipping game assets, official fonts, or reference screenshots.
 - Supporting every feed quirk. The parser should be robust, not infinite.
 

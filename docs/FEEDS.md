@@ -34,6 +34,11 @@ Transport selection is explicit. If a direct fetch fails, the app explains the
 failure and offers the configured alternatives; it never silently reroutes a
 feed through a third party.
 
+The `Sources` section is the UI shell for this contract. It lands with the direct
+transport in v0.2.0; the other rows are documented, not shipped. Folder
+management is deferred until the FreshRSS phase, when imported categories need a
+review and conflict flow.
+
 ## Direct fetch rules
 
 - **HTTPS only.** An HTTPS page cannot fetch an `http://` feed (mixed content).
