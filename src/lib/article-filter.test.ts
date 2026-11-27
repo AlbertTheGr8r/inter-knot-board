@@ -21,9 +21,9 @@ describe("matchesScope", () => {
   });
 
   it("matches unread and read separately", () => {
-    expect(articles.filter((item) => matchesScope(item, "unread"))).toHaveLength(
-      2,
-    );
+    expect(
+      articles.filter((item) => matchesScope(item, "unread")),
+    ).toHaveLength(2);
     expect(articles.filter((item) => matchesScope(item, "read"))).toHaveLength(
       1,
     );
@@ -32,9 +32,9 @@ describe("matchesScope", () => {
 
 describe("filterArticles", () => {
   it("combines scope and source", () => {
-    expect(filterArticles(articles, "unread", "one").map((item) => item.id)).toEqual(
-      ["a"],
-    );
+    expect(
+      filterArticles(articles, "unread", "one").map((item) => item.id),
+    ).toEqual(["a"]);
   });
 
   it("clears the source with null", () => {
