@@ -2,15 +2,29 @@ import { html, nothing, type TemplateResult } from "lit";
 import { demoArticles } from "../data/demo";
 import type { Article } from "../data/types";
 import { filterArticles, type Scope } from "../lib/article-filter";
+import {
+  MINDFUL_IDLE_MS,
+  MINDFUL_TICK_MS,
+  createMindfulState,
+  drainMindful,
+  rechargeMindful,
+  setMindfulCap,
+  setMindfulMode,
+  type MindfulMode,
+  type MindfulState,
+} from "../lib/mindful";
+import { loadMindfulState, saveMindfulState } from "../lib/mindful-storage";
 import { IkElement } from "../ui/base";
 import { chevronDownIcon } from "../ui/icons";
 import "./ik-board";
 import "./ik-history";
 import "./ik-post-dialog";
+import "./ik-proxy";
 import "./ik-sources";
 import "./ik-topbar";
 import type { HistoryEntry } from "./ik-history";
 import type { IkPostDialog } from "./ik-post-dialog";
+import type { IkProxy } from "./ik-proxy";
 import type { SourceSummary } from "./ik-sources";
 
 type Section = "board" | "saved" | "sources" | "history";
@@ -33,6 +47,8 @@ export class IkApp extends IkElement {
     scope: { state: true },
     sourceFilter: { state: true },
     openedAt: { state: true },
+    mindful: { state: true },
+    compact: { state: true },
   };
 
   articles: Article[] = demoArticles;
@@ -40,16 +56,37 @@ export class IkApp extends IkElement {
   scope: Scope = "all";
   sourceFilter: string | null = null;
   openedAt = new Map<string, number>();
+  mindful: MindfulState = loadMindfulState();
+  compact = false;
+
+  private timerId = 0;
+  private lastInteraction = Date.now();
+  private hiddenAt = 0;
+  private postOpen = false;
+  private proxyOpen = false;
 
   connectedCallback(): void {
     super.connectedCallback();
     document.addEventListener("click", this.onDocumentClick);
     document.addEventListener("keydown", this.onDocumentKeydown);
+    document.addEventListener("visibilitychange", this.onVisibilityChange);
+    window.addEventListener("pagehide", this.onPageHide);
+    window.addEventListener("pointerdown", this.onActivity, { passive: true });
+    window.addEventListener("wheel", this.onActivity, { passive: true });
+    window.addEventListener("scroll", this.onActivity, { passive: true });
+    this.lastInteraction = Date.now();
+    this.timerId = window.setInterval(this.tickMindful, MINDFUL_TICK_MS);
   }
 
   disconnectedCallback(): void {
     document.removeEventListener("click", this.onDocumentClick);
     document.removeEventListener("keydown", this.onDocumentKeydown);
+    document.removeEventListener("visibilitychange", this.onVisibilityChange);
+    window.removeEventListener("pagehide", this.onPageHide);
+    window.removeEventListener("pointerdown", this.onActivity);
+    window.removeEventListener("wheel", this.onActivity);
+    window.removeEventListener("scroll", this.onActivity);
+    window.clearInterval(this.timerId);
     super.disconnectedCallback();
   }
 
@@ -64,10 +101,9 @@ export class IkApp extends IkElement {
       >
         <ik-topbar
           .unread=${this.unreadCount}
-          .total=${this.articles.length}
-          .level=${this.level}
+          .mindful=${this.mindful}
           @ik-refresh=${this.onRefresh}
-          @ik-density=${this.onDensity}
+          @ik-open-proxy=${this.onOpenProxy}
         ></ik-topbar>
 
         <main class="ik-main" id="board">
@@ -101,6 +137,16 @@ export class IkApp extends IkElement {
           @ik-post-closed=${this.onPostClosed}
           @ik-toggle-save=${this.onToggleSave}
         ></ik-post-dialog>
+
+        <ik-proxy
+          .mindful=${this.mindful}
+          .compact=${this.compact}
+          @ik-mindful-cap=${this.onMindfulCap}
+          @ik-mindful-mode=${this.onMindfulMode}
+          @ik-mindful-reset=${this.onMindfulReset}
+          @ik-density=${this.onDensity}
+          @ik-proxy-closed=${this.onProxyClosed}
+        ></ik-proxy>
       </ui-tabs>
     `;
   }
@@ -229,10 +275,6 @@ export class IkApp extends IkElement {
     return this.articles.filter((article) => article.unread).length;
   }
 
-  private get level(): number {
-    return Math.max(1, Math.min(60, Math.floor(this.articles.length / 4) + 1));
-  }
-
   private get filterLabel(): string {
     if (this.sourceFilter) {
       return (
@@ -274,6 +316,9 @@ export class IkApp extends IkElement {
     const detail = (event as CustomEvent<{ value: Section }>).detail;
     if (!detail?.value) return;
 
+    if (this.section === "board" && detail.value !== "board") {
+      this.pauseMindful();
+    }
     this.section = detail.value;
     this.closeFilter();
   };
@@ -286,6 +331,8 @@ export class IkApp extends IkElement {
 
   private onOpenPost = (event: CustomEvent<Article>): void => {
     const article = event.detail;
+    this.postOpen = true;
+    this.pauseMindful();
     this.markOpened(article);
     const updated =
       this.articles.find((item) => item.id === article.id) ?? article;
@@ -294,8 +341,98 @@ export class IkApp extends IkElement {
   };
 
   private onPostClosed = (): void => {
-    // Reserved for the mindful timer, which pauses while the reader is open.
+    this.postOpen = false;
+    this.lastInteraction = Date.now();
+    this.pauseMindful();
   };
+
+  private onOpenProxy = (): void => {
+    this.proxyOpen = true;
+    this.pauseMindful();
+    const proxy = this.querySelector<IkProxy>("ik-proxy");
+    void proxy?.open();
+  };
+
+  private onProxyClosed = (): void => {
+    this.proxyOpen = false;
+    this.lastInteraction = Date.now();
+    this.pauseMindful();
+  };
+
+  private onMindfulCap = (event: CustomEvent<number>): void => {
+    const cap = event.detail;
+    const now = Date.now();
+    this.updateMindful(
+      setMindfulMode(setMindfulCap(this.mindful, cap, now), "mindful", now),
+    );
+    this.lastInteraction = now;
+  };
+
+  private onMindfulMode = (event: CustomEvent<MindfulMode>): void => {
+    const now = Date.now();
+    this.updateMindful(setMindfulMode(this.mindful, event.detail, now));
+    this.lastInteraction = now;
+  };
+
+  private onMindfulReset = (): void => {
+    const now = Date.now();
+    this.updateMindful(createMindfulState(now, this.mindful.capMinutes));
+    this.lastInteraction = now;
+  };
+
+  private onActivity = (): void => {
+    const now = Date.now();
+    const wasIdle = now - this.lastInteraction > MINDFUL_IDLE_MS;
+    this.lastInteraction = now;
+    if (wasIdle) this.pauseMindful(now);
+  };
+
+  private onVisibilityChange = (): void => {
+    const now = Date.now();
+    if (document.visibilityState === "hidden") {
+      this.hiddenAt = now;
+      this.pauseMindful(now);
+      return;
+    }
+
+    const away = this.hiddenAt > 0 ? now - this.hiddenAt : 0;
+    this.hiddenAt = 0;
+    this.lastInteraction = now;
+    this.updateMindful(rechargeMindful(this.mindful, away, now));
+  };
+
+  private onPageHide = (): void => {
+    this.pauseMindful();
+  };
+
+  private tickMindful = (): void => {
+    const now = Date.now();
+    const canDrain =
+      document.visibilityState === "visible" &&
+      !this.postOpen &&
+      !this.proxyOpen &&
+      this.section === "board" &&
+      now - this.lastInteraction <= MINDFUL_IDLE_MS;
+
+    if (!canDrain) {
+      this.pauseMindful(now);
+      return;
+    }
+
+    const elapsed = now - this.mindful.updatedAt;
+    if (elapsed < 1000) return;
+    this.updateMindful(drainMindful(this.mindful, elapsed, now));
+  };
+
+  private pauseMindful(now = Date.now()): void {
+    this.mindful = { ...this.mindful, updatedAt: now };
+    saveMindfulState(this.mindful);
+  }
+
+  private updateMindful(next: MindfulState): void {
+    this.mindful = next;
+    saveMindfulState(next);
+  }
 
   private onToggleSave = (
     event: CustomEvent<{ id: string; starred: boolean }>,
@@ -336,8 +473,10 @@ export class IkApp extends IkElement {
     window.setTimeout(() => this.classList.remove("is-syncing"), 900);
   };
 
-  private onDensity = (): void => {
-    this.classList.toggle("is-compact");
+  private onDensity = (event: Event): void => {
+    const detail = (event as CustomEvent<boolean>).detail;
+    this.compact = typeof detail === "boolean" ? detail : !this.compact;
+    this.classList.toggle("is-compact", this.compact);
   };
 
   private onDocumentClick = (event: MouseEvent): void => {

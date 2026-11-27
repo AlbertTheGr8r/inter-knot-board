@@ -1,23 +1,31 @@
 import { html, nothing, type TemplateResult } from "lit";
+import {
+  createMindfulState,
+  isMindfulEmpty,
+  mindfulCapLabel,
+  mindfulCapUnit,
+  mindfulRatio,
+  mindfulRemainingLabel,
+  type MindfulState,
+} from "../lib/mindful";
 import { IkElement } from "../ui/base";
 import { refreshIcon } from "../ui/icons";
 
 export class IkTopbar extends IkElement {
   static properties = {
     unread: { type: Number },
-    total: { type: Number },
-    level: { type: Number },
+    mindful: { attribute: false },
     busy: { state: true },
   };
 
   unread = 0;
-  total = 0;
-  level = 1;
+  mindful: MindfulState = createMindfulState();
   busy = false;
 
   render(): TemplateResult {
-    const percent =
-      this.total > 0 ? Math.round((this.unread / this.total) * 100) : 0;
+    const ratio = mindfulRatio(this.mindful);
+    const empty = isMindfulEmpty(this.mindful);
+    const low = ratio <= 0.2;
 
     return html`
       <header class="ik-topbar">
@@ -32,19 +40,32 @@ export class IkTopbar extends IkElement {
             ${refreshIcon}
           </button>
 
-          <div class="ik-profile">
+          <button
+            class=${`ik-profile${low ? " is-low" : ""}${empty ? " is-empty" : ""}`}
+            type="button"
+            aria-label=${`Open Proxy menu. ${mindfulRemainingLabel(this.mindful)}.`}
+            title=${mindfulRemainingLabel(this.mindful)}
+            @click=${this.openProxy}
+          >
             <span class="ik-avatar ik-avatar--profile">PX</span>
-            <div class="ik-profile__meta">
+            <span class="ik-profile__meta">
               <span class="ik-profile__name">Proxy</span>
-              <span class="ik-profile__bar">
-                <span style=${`width:${percent}%`}></span>
+              <span
+                class="ik-profile__bar"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow=${Math.round(ratio * 100)}
+                aria-label="Mindful reading time"
+              >
+                <span style=${`width:${ratio * 100}%`}></span>
               </span>
-            </div>
-            <span class="ik-profile__nums">${this.unread}/${this.total}</span>
-            <span class="ik-profile__lv"
-              >LV ${String(this.level).padStart(2, "0")}</span
-            >
-          </div>
+            </span>
+            <span class="ik-profile__cap">
+              <strong>${mindfulCapLabel(this.mindful)}</strong>
+              <small>${mindfulCapUnit(this.mindful)}</small>
+            </span>
+          </button>
         </div>
 
         <ui-tabs-list aria-label="Inter-Knot sections" class="ik-tabs">
@@ -88,6 +109,12 @@ export class IkTopbar extends IkElement {
     window.setTimeout(() => {
       this.busy = false;
     }, 900);
+  };
+
+  private openProxy = (): void => {
+    this.dispatchEvent(
+      new CustomEvent("ik-open-proxy", { bubbles: true, composed: true }),
+    );
   };
 }
 

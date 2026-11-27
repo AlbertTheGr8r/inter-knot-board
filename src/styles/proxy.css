@@ -1,0 +1,230 @@
+[data-slot="dialog-content"].ik-proxy-dialog {
+  width: min(560px, 93vw);
+  height: min(760px, 88vh);
+}
+
+.ik-proxy {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background:
+    radial-gradient(
+      600px 300px at 100% 0%,
+      rgba(241, 216, 10, 0.06),
+      transparent 60%
+    ),
+    #161618;
+}
+
+.ik-proxy__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: 15px 17px;
+  border-bottom: 1px solid var(--ik-line);
+  background: #141416;
+}
+
+.ik-proxy__identity {
+  min-width: 0;
+}
+
+.ik-proxy__identity h2 {
+  margin: 0;
+  font-size: 19px;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.ik-proxy__identity p {
+  margin: 4px 0 0;
+  color: var(--ik-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ik-proxy__close {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 32px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ik-red);
+  color: #120604;
+  cursor: pointer;
+}
+
+.ik-proxy__close svg {
+  width: 17px;
+  height: 17px;
+}
+
+.ik-proxy__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 6px 17px 24px;
+}
+
+.ik-proxy__section {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--ik-line);
+}
+
+.ik-proxy__section:last-child {
+  border-bottom: 0;
+}
+
+.ik-proxy__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ik-proxy__section-head h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ik-proxy__status {
+  color: var(--ik-cyan);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ik-proxy__status.is-empty {
+  color: var(--ik-red-bright);
+}
+
+.ik-proxy__meter {
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid var(--ik-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ik-proxy__meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7fd0ff, #f1f2ea);
+  transition: width 0.3s ease;
+}
+
+.ik-proxy__hint,
+.ik-proxy__fine {
+  margin: 9px 0 0;
+  color: var(--ik-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ik-proxy__fine {
+  color: var(--ik-dim);
+  font-size: 11px;
+}
+
+.ik-proxy__caps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.ik-proxy__caps button {
+  min-width: 52px;
+  padding: 9px 11px;
+  border: 1px solid var(--ik-line-strong);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--ik-text-soft);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ik-proxy__caps button[aria-pressed="true"] {
+  border-color: var(--ik-accent);
+  background: var(--ik-accent);
+  color: var(--ik-accent-ink);
+}
+
+.ik-proxy__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 13px;
+  border-top: 1px solid var(--ik-line);
+  color: var(--ik-text-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ik-proxy__text-button {
+  padding: 7px 10px;
+  border: 1px solid var(--ik-line-strong);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ik-accent);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ik-proxy__toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--ik-text-soft);
+  cursor: pointer;
+}
+
+.ik-proxy__toggle input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--ik-accent);
+}
+
+.ik-proxy__toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ik-proxy__toggle strong {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ik-proxy__toggle small {
+  color: var(--ik-muted);
+  font-size: 11px;
+}
+
+@media (max-width: 680px) {
+  [data-slot="dialog-content"].ik-proxy-dialog {
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+  }
+}

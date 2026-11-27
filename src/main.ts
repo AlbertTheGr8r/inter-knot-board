@@ -18,5 +18,6 @@ import "./styles/poster.css";
 import "./styles/board.css";
 import "./styles/post.css";
 import "./styles/views.css";
+import "./styles/proxy.css";
 
 import "./components/ik-app";

@@ -87,8 +87,20 @@
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 14px;
   background: rgba(17, 17, 19, 0.72);
+  color: var(--ik-text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
   box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.9);
   backdrop-filter: blur(10px);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.ik-profile:hover {
+  border-color: rgba(241, 216, 10, 0.32);
+  background: rgba(24, 24, 27, 0.86);
 }
 
 .ik-profile__meta {
@@ -121,24 +133,46 @@
   background: linear-gradient(90deg, #7fd0ff, #c9ecff);
 }
 
-.ik-profile__nums {
-  color: var(--ik-cyan);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+.ik-profile__cap {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  line-height: 0.9;
 }
 
-.ik-profile__lv {
-  padding: 3px 6px;
-  border: 1px solid var(--ik-line-strong);
-  border-radius: 4px;
+.ik-profile__cap strong {
+  color: var(--ik-text);
+  font-size: 17px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.ik-profile__cap small {
+  margin-top: 3px;
   color: var(--ik-muted);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.ik-profile.is-low .ik-profile__bar > span {
+  background: linear-gradient(90deg, #ff8a3d, #ff4a2b);
+}
+
+.ik-profile.is-low .ik-profile__cap strong,
+.ik-profile.is-empty .ik-profile__cap strong {
+  color: var(--ik-red-bright);
+}
+
+.ik-profile.is-empty {
+  border-color: rgba(255, 74, 43, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(255, 74, 43, 0.12),
+    0 10px 24px -14px rgba(0, 0, 0, 0.9);
 }
 
 .ik-tabs {
@@ -252,15 +286,13 @@ ui-tabs-tab {
 }
 
 @media (max-width: 900px) {
-  .ik-profile__meta,
-  .ik-profile__nums,
-  .ik-profile__lv {
+  .ik-profile__meta {
     display: none;
   }
 
   .ik-profile {
-    padding: 4px;
-    border-radius: 50%;
+    padding: 4px 8px 4px 4px;
+    border-radius: 999px;
   }
 }
 
@@ -286,6 +318,19 @@ ui-tabs-tab {
   }
 
   .ik-profile {
+    display: flex;
+    padding: 3px 6px 3px 3px;
+  }
+
+  .ik-profile__cap {
+    min-width: 24px;
+  }
+
+  .ik-profile__cap strong {
+    font-size: 13px;
+  }
+
+  .ik-profile__cap small {
     display: none;
   }
 
