@@ -61,7 +61,10 @@ export class IkSources extends IkElement {
                           >
                           <span class="ik-source-row__body">
                             <strong>${source.title}</strong>
-                            <span>${source.id} · ${source.total} posts</span>
+                            <span
+                              >${source.id} · ${source.total}
+                              ${source.total === 1 ? "post" : "posts"}</span
+                            >
                           </span>
                           <span class="ik-source-row__count">
                             ${
