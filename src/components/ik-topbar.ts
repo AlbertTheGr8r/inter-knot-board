@@ -40,9 +40,7 @@ export class IkTopbar extends IkElement {
                 <span style=${`width:${percent}%`}></span>
               </span>
             </div>
-            <span class="ik-profile__nums"
-              >${this.unread}/${this.total}</span
-            >
+            <span class="ik-profile__nums">${this.unread}/${this.total}</span>
             <span class="ik-profile__lv"
               >LV ${String(this.level).padStart(2, "0")}</span
             >

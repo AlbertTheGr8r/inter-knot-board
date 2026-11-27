@@ -1,63 +1,119 @@
-# Inter-Knot
+# Inter-Knot Board
 
-An RSS reader that looks and behaves like the **Inter-Knot board** from *Zenless Zone Zero*: a dark masonry wall of post cards, a floating pill header, and a post view that opens over a blurred board.
+**A static, board-style RSS reader inspired by the Inter-Knot board in _Zenless Zone Zero_.**  
+An unofficial fan project and a tech demo — not a service.
 
-The project is a **static site**. No framework, no server required to render it.
+[Live demo](https://albertthegr8r.github.io/inter-knot-board/) ·
+[Architecture](docs/ARCHITECTURE.md) ·
+[Feed notes](docs/FEEDS.md) ·
+[License](LICENSE)
 
-## Status
+![The board, with demo posts](docs/screenshots/board.webp)
 
-Scaffold / milestone 1. What works today:
+## What this is
 
-- The board shell: textured backdrop, floating header, profile chip, three pill tabs, bottom-right feed filter.
-- Order-preserving masonry (4 → 3 → 2 → 1 columns) with variable-height cards.
-- Card anatomy from the reference: media, relative-time badge, `NEW` sticker, OP row, bracketed tag, title clamp, excerpt clamp.
-- Deterministic generated poster art for posts without a photo (8 palettes, 5 patterns) — no gray placeholder boxes.
-- A post dialog built on `@ui-sdk/web/dialog`: blurred backdrop, source bar, red close button, optional system note, two-pane body, `Expand` for long text, quote card, tags, comments with floor badges.
-- Demo, in-world content so the layout can be evaluated before feeds are connected.
+Inter-Knot Board is a single-page reader that treats feeds like posts pinned to a
+board: a masonry wall, bracketed tags, a floating header, and a post view that
+opens over a blurred board.
 
-Not wired yet: the actual RSS pipeline, feed management, OPML, persistence, search, and the build-time feed baker. That is milestone 2+.
+It is a static site. There are no accounts, no backend, no analytics, and no
+tracking. Your feed list and reading state live in your browser.
 
-## Stack
+**Status: v0.1.0 — UI demo.** The board, post view, filters, keyboard basics,
+responsive layout, and generated poster art work. The feed pipeline (RSS/Atom,
+OPML, local proxy, FreshRSS) is the next milestone. Until then the board uses
+clearly in-world demo posts.
 
-- **Vite 8 + TypeScript**, static output in `dist/`
-- **Lit 3** with light-DOM rendering (`createRenderRoot() { return this }`)
-- **@ui-sdk/web** (Vercel Labs UI SDK, beta) for accessible Dialog and Tabs behaviors; all styling is ours
-- **@fontsource** for self-hosted Anton + Figtree (stand-ins for the game's proprietary type)
-- `dompurify` and `idb-keyval` are installed for the upcoming feed/reader layer
+## What works today
 
-Bun is the package manager here because no Node/npm is installed on this machine.
+- Order-preserving masonry: 4 → 3 → 2 → 1 columns.
+- Post cards with relative time, unread/new markers, source, tag, title, excerpt.
+- Deterministic generated posters for posts without images (8 palettes, 5
+  patterns) — no grey placeholders.
+- Post dialog: blurred backdrop, source bar, red close button, optional system
+  note, poster/media pane, scrollable article, `Expand`, quote card, tags,
+  comments with floor badges.
+- Board / Unread / Saved tabs, per-feed filter, compact-density toggle.
+- Keyboard: cards are focusable; `Enter`/`Space` opens; the dialog traps focus
+  and closes on `Escape`.
+- Static build with type-checking and a production CSP.
+
+![The post view](docs/screenshots/post.webp)
+
+## Quick start
+
+Requires [Bun](https://bun.sh/) 1.4+.
 
 ```bash
 bun install
 bun run dev      # http://localhost:5173
-bun run build    # type-check + static build into dist/
-bun run preview
+bun run check    # type-check + tests + production build
+bun run preview  # preview the production build
 ```
 
-## Layout
+## How feeds will work
 
-```
-src/
-  components/   ik-app, ik-topbar, ik-board, ik-card, ik-poster, ik-post-dialog
-  data/         types + in-world demo articles
-  lib/          hashing/PRNG, relative time, initials
-  styles/       tokens, base, chrome, board, post
-  ui/           light-DOM base class, inline icon set
-reference/      design screenshots (study only, not shipped)
-public/         favicon
-```
+A static site cannot bypass the browser's CORS rules. Direct feeds are the
+default and only mode that works without help; feeds that do not send
+`Access-Control-Allow-Origin` need a local proxy or a reader backend.
 
-## Design notes
+| Mode                 | Works on GitHub Pages             | Setup                                         |
+| -------------------- | --------------------------------- | --------------------------------------------- |
+| **Direct** (default) | Only CORS-enabled feeds           | None — planned v0.2.0                         |
+| **Local proxy**      | Yes, from `127.0.0.1`             | Run the small Bun proxy — planned v0.3.0      |
+| **FreshRSS**         | Yes                               | Your instance + API password — planned v0.4.0 |
+| **Miniflux**         | Usually; may need a reverse proxy | Your instance + API token — planned v0.4.0    |
+| **Lemmy**            | Same as direct                    | Native community/user RSS — planned v0.5.0    |
 
-- Palette sampled from the screenshots: accent `#F1D80A`, close-red `#C22A12`, glow `#FF4A2B`, cyan `#ADDFFF`, surfaces `#1B1B1E`/`#232327`.
-- The board scrolls under a gradient header; cards peek above it, as in-game.
-- Tags stay monochrome white; red is reserved for unread/urgent/close. No fake view counts — the badge shows relative time, and the heart shows reading time when a real feed has no likes.
-- Posters are generated from `hash(article.id + title)`, so they are stable across reloads and unique per post.
-- No game textures, logos, art, or fonts are copied. The globe mark and poster art are CSS/SVG.
+Only the UI demo is implemented in v0.1.0; the rows above are documented
+contracts, not shipped features.
 
-## Next
+The planned daily-use setup is **GitHub Pages + local proxy + browser storage**,
+with FreshRSS or Miniflux as optional sync backends. The app will never ship a
+public CORS proxy or ask you to paste feed credentials into a third-party
+service. See [docs/FEEDS.md](docs/FEEDS.md) for the contract and security
+requirements.
 
-1. Feed model + RSS/Atom/JSON parser, adapter chain (baked → direct → configurable proxy → optional relay).
-2. Baked presets + `scripts/bake-feeds.ts` + scheduled deploy.
-3. Feed manager, OPML import/export, unread/saved persistence, search.
-4. Keyboard navigation, responsive polish, PWA/offline, a11y audit.
+## Deploy
+
+The site is plain static output in `dist/`. The included
+[Pages workflow](.github/workflows/pages.yml) builds and deploys on every push to
+`main`:
+
+- `https://albertthegr8r.github.io/inter-knot-board/`
+- Assets use relative URLs, so the same build also works on a custom domain or a
+  local static server.
+
+GitHub Pages cannot set response headers. The production CSP is delivered as a
+meta tag; `frame-ancestors`, HSTS, and `X-Frame-Options` are not available. This
+is documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) rather than papered
+over.
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) — components, data flow, transport
+  interface.
+- [Feeds and CORS](docs/FEEDS.md) — direct fetch, local proxy, FreshRSS,
+  Miniflux.
+- [Deployment](docs/DEPLOYMENT.md) — GitHub Pages, CSP limits, local proxy.
+- [Lemmy](docs/LEMMY.md) — native RSS, read-only scope, comments.
+- [Roadmap](docs/ROADMAP.md) — what is next, and what is deliberately out of
+  scope.
+- [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) ·
+  [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## How this was built
+
+This is a tech demo, not production software. The design study, direction, and
+review are human; most of the implementation was written with AI assistance. It
+is intentionally small and will have rough edges. AI-assisted contributions are
+welcome when they are disclosed and verified.
+
+## License and disclaimer
+
+MIT for the original code and documentation. Zenless Zone Zero and Inter-Knot
+are trademarks of HoYoverse. This is an unofficial fan project, not affiliated
+with or endorsed by HoYoverse. No game assets or reference screenshots are
+included. See [DISCLAIMER.md](DISCLAIMER.md) and
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Bundled license texts are served
+at `/licenses/`.

@@ -58,10 +58,7 @@ export class IkBoard extends IkElement {
             <div class="ik-board__col" role="presentation">
               ${column.map(
                 (article) => html`
-                  <ik-card
-                    role="listitem"
-                    .article=${article}
-                  ></ik-card>
+                  <ik-card role="listitem" .article=${article}></ik-card>
                 `,
               )}
             </div>
@@ -83,13 +80,9 @@ export class IkBoard extends IkElement {
     const width = this.clientWidth;
     if (!width || this.articles.length === 0) return;
 
-    const count =
-      width >= 1480 ? 4 : width >= 1080 ? 3 : width >= 720 ? 2 : 1;
+    const count = width >= 1480 ? 4 : width >= 1080 ? 3 : width >= 720 ? 2 : 1;
 
-    const columns = Array.from(
-      { length: count },
-      (): Article[] => [],
-    );
+    const columns = Array.from({ length: count }, (): Article[] => []);
     const heights = new Array<number>(count).fill(0);
 
     for (const article of this.articles) {

@@ -1,13 +1,27 @@
 {
-  "name": "inter-knot",
+  "name": "inter-knot-board",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "An Inter-Knot-styled RSS reader. Static Web Components frontend.",
+  "description": "A static, board-style RSS reader inspired by Inter-Knot. Tech demo, not a service.",
+  "license": "MIT",
+  "packageManager": "bun@1.4.4",
+  "homepage": "https://albertthegr8r.github.io/inter-knot-board/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlbertTheGr8r/inter-knot-board.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AlbertTheGr8r/inter-knot-board/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "tsc --noEmit && vitest run && vite build"
   },
   "dependencies": {
     "@fontsource/anton": "^5.3.0",
@@ -19,7 +33,9 @@
     "lit": "^3.3.3"
   },
   "devDependencies": {
+    "prettier": "^3.10.1",
     "typescript": "^7.0.2",
-    "vite": "^8.4.0"
+    "vite": "^8.4.0",
+    "vitest": "^5.1.2"
   }
 }

@@ -4,15 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0d0d0f" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta
       name="description"
-      content="An Inter-Knot-styled RSS reader: a board of posts from the feeds you follow."
+      content="Inter-Knot Board is a static, board-style RSS reader inspired by Zenless Zone Zero. A tech demo, not a service."
     />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-    <title>Inter-Knot — Board</title>
+    <title>Inter-Knot Board — a static RSS reader demo</title>
   </head>
   <body>
     <ik-app></ik-app>
+    <noscript>
+      <p style="padding: 24px; font-family: sans-serif; color: #f4f3ee">
+        Inter-Knot Board is a client-side application and needs JavaScript to
+        run. The source is available on GitHub.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

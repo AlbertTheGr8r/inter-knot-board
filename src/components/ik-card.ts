@@ -36,12 +36,16 @@ export class IkCard extends IkElement {
             ${clockIcon}
             <span>${relativeTime(article.publishedAt)}</span>
           </span>
-          ${article.unread
-            ? html`<span class="ik-card__sticker">NEW</span>`
-            : nothing}
-          ${article.picked
-            ? html`<span class="ik-card__pick">PICK</span>`
-            : nothing}
+          ${
+            article.unread
+              ? html`<span class="ik-card__sticker">NEW</span>`
+              : nothing
+          }
+          ${
+            article.picked
+              ? html`<span class="ik-card__pick">PICK</span>`
+              : nothing
+          }
           <div class="ik-card__op">
             <span
               class="ik-avatar"

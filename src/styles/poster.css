@@ -8,11 +8,7 @@ ik-poster {
   height: 100%;
   overflow: hidden;
   container-type: inline-size;
-  background: linear-gradient(
-    135deg,
-    var(--p-a, #f1d80a),
-    var(--p-b, #d5a400)
-  );
+  background: linear-gradient(135deg, var(--p-a, #f1d80a), var(--p-b, #d5a400));
   color: var(--p-ink, #101010);
   isolation: isolate;
 }
@@ -46,11 +42,7 @@ ik-poster {
   left: 6%;
   color: var(--p-ink, #101010);
   font-family: var(--ik-font-display);
-  font-size: clamp(
-    30px,
-    calc(100cqw / var(--ik-chars, 5) * 1.4),
-    120px
-  );
+  font-size: clamp(30px, calc(100cqw / var(--ik-chars, 5) * 1.4), 120px);
   letter-spacing: -0.02em;
   line-height: 0.82;
   white-space: nowrap;

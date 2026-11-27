@@ -51,7 +51,9 @@
   box-shadow:
     0 0 18px rgba(255, 74, 43, 0.22),
     inset 0 0 12px rgba(255, 74, 43, 0.08);
-  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
 }
 
 .ik-refresh svg {
@@ -199,7 +201,9 @@ ui-tabs-tab {
   color: var(--ik-text-soft);
   cursor: pointer;
   backdrop-filter: blur(8px);
-  transition: color 0.16s ease, border-color 0.16s ease;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease;
 }
 
 .ik-icon-btn svg {

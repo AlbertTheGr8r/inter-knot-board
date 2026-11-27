@@ -76,15 +76,17 @@ export class IkApp extends IkElement {
                 <button
                   type="button"
                   role="option"
-                  aria-selected=${option.value === this.feedFilter
-                    ? "true"
-                    : "false"}
+                  aria-selected=${
+                    option.value === this.feedFilter ? "true" : "false"
+                  }
                   @click=${() => this.setFilter(option.value)}
                 >
                   <span>${option.label}</span>
-                  ${option.value === this.feedFilter
-                    ? html`<span class="ik-filter__check">✓</span>`
-                    : nothing}
+                  ${
+                    option.value === this.feedFilter
+                      ? html`<span class="ik-filter__check">✓</span>`
+                      : nothing
+                  }
                 </button>
               `,
             )}
@@ -94,15 +96,17 @@ export class IkApp extends IkElement {
                 <button
                   type="button"
                   role="option"
-                  aria-selected=${option.value === this.feedFilter
-                    ? "true"
-                    : "false"}
+                  aria-selected=${
+                    option.value === this.feedFilter ? "true" : "false"
+                  }
                   @click=${() => this.setFilter(option.value)}
                 >
                   <span>${option.label}</span>
-                  ${option.value === this.feedFilter
-                    ? html`<span class="ik-filter__check">✓</span>`
-                    : nothing}
+                  ${
+                    option.value === this.feedFilter
+                      ? html`<span class="ik-filter__check">✓</span>`
+                      : nothing
+                  }
                 </button>
               `,
             )}
@@ -137,10 +141,7 @@ export class IkApp extends IkElement {
   }
 
   private get level(): number {
-    return Math.max(
-      1,
-      Math.min(60, Math.floor(this.articles.length / 4) + 1),
-    );
+    return Math.max(1, Math.min(60, Math.floor(this.articles.length / 4) + 1));
   }
 
   private get coreFilters(): FilterOption[] {

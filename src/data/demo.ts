@@ -211,8 +211,7 @@ export const demoArticles: Article[] = [
     aspect: 1.0,
     minutes: 1,
     likes: 27636,
-    systemNote:
-      "System notice. This affects every proxy on the board.",
+    systemNote: "System notice. This affects every proxy on the board.",
   },
   {
     id: "metro-recordings",

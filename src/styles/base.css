@@ -21,8 +21,16 @@ body {
   text-rendering: optimizeLegibility;
   background-image:
     radial-gradient(1200px 760px at 50% -12%, #242426 0%, transparent 62%),
-    radial-gradient(900px 520px at 6% 106%, rgba(241, 216, 10, 0.05) 0%, transparent 70%),
-    radial-gradient(900px 520px at 96% 100%, rgba(255, 74, 43, 0.04) 0%, transparent 68%),
+    radial-gradient(
+      900px 520px at 6% 106%,
+      rgba(241, 216, 10, 0.05) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      900px 520px at 96% 100%,
+      rgba(255, 74, 43, 0.04) 0%,
+      transparent 68%
+    ),
     repeating-linear-gradient(
       112deg,
       rgba(255, 255, 255, 0.018) 0 1px,

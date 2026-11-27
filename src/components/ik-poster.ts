@@ -12,14 +12,62 @@ interface Palette {
 }
 
 const PALETTES: Palette[] = [
-  { a: "#f1d80a", b: "#d5a400", ink: "#101010", accent: "#ff4a2b", accentText: "#ffffff" },
-  { a: "#1a1033", b: "#3d1c70", ink: "#f1e9ff", accent: "#39e0c8", accentText: "#062a26" },
-  { a: "#e8e2d4", b: "#cfc5b0", ink: "#171717", accent: "#d9342b", accentText: "#ffffff" },
-  { a: "#0d2b3b", b: "#12455e", ink: "#d9f4ff", accent: "#ffb347", accentText: "#241200" },
-  { a: "#d8362b", b: "#8f1a13", ink: "#fff2e4", accent: "#161616", accentText: "#ffe9d6" },
-  { a: "#0f0f10", b: "#262626", ink: "#f1d80a", accent: "#f1d80a", accentText: "#111111" },
-  { a: "#bfe3c0", b: "#86c48c", ink: "#102114", accent: "#f05a28", accentText: "#ffffff" },
-  { a: "#efe9dc", b: "#d7cbb4", ink: "#1a1a1a", accent: "#2a6bff", accentText: "#ffffff" },
+  {
+    a: "#f1d80a",
+    b: "#d5a400",
+    ink: "#101010",
+    accent: "#ff4a2b",
+    accentText: "#ffffff",
+  },
+  {
+    a: "#1a1033",
+    b: "#3d1c70",
+    ink: "#f1e9ff",
+    accent: "#39e0c8",
+    accentText: "#062a26",
+  },
+  {
+    a: "#e8e2d4",
+    b: "#cfc5b0",
+    ink: "#171717",
+    accent: "#d9342b",
+    accentText: "#ffffff",
+  },
+  {
+    a: "#0d2b3b",
+    b: "#12455e",
+    ink: "#d9f4ff",
+    accent: "#ffb347",
+    accentText: "#241200",
+  },
+  {
+    a: "#d8362b",
+    b: "#8f1a13",
+    ink: "#fff2e4",
+    accent: "#161616",
+    accentText: "#ffe9d6",
+  },
+  {
+    a: "#0f0f10",
+    b: "#262626",
+    ink: "#f1d80a",
+    accent: "#f1d80a",
+    accentText: "#111111",
+  },
+  {
+    a: "#bfe3c0",
+    b: "#86c48c",
+    ink: "#102114",
+    accent: "#f05a28",
+    accentText: "#ffffff",
+  },
+  {
+    a: "#efe9dc",
+    b: "#d7cbb4",
+    ink: "#1a1a1a",
+    accent: "#2a6bff",
+    accentText: "#ffffff",
+  },
 ];
 
 const STOP_WORDS = new Set([
@@ -74,7 +122,8 @@ export class IkPoster extends IkElement {
 
     const seed = hashString(`${article.id}:${article.title}`);
     const random = mulberry32(seed);
-    const palette = PALETTES[Math.floor(random() * PALETTES.length)] ?? PALETTES[0]!;
+    const palette =
+      PALETTES[Math.floor(random() * PALETTES.length)] ?? PALETTES[0]!;
     const pattern = Math.floor(random() * 5);
     const uid = `ik${(seed % 1679616).toString(36)}`;
     const word = headlineWord(article.title);

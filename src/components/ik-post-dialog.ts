@@ -71,9 +71,11 @@ export class IkPostDialog extends IkElement {
           <div class="ik-post__source">
             <strong>${article.feedTitle}</strong>
             <span class="ik-post__stat">
-              ${article.likes !== undefined
-                ? html`${heartIcon} ${compactNumber(article.likes)}`
-                : html`${clockIcon} ${article.minutes} min`}
+              ${
+                article.likes !== undefined
+                  ? html`${heartIcon} ${compactNumber(article.likes)}`
+                  : html`${clockIcon} ${article.minutes} min`
+              }
             </span>
           </div>
           <ui-dialog-close>
@@ -87,23 +89,27 @@ export class IkPostDialog extends IkElement {
           </ui-dialog-close>
         </div>
 
-        ${article.systemNote
-          ? html`
-              <div class="ik-post__note">
-                ${infoIcon}
-                <p>${article.systemNote}</p>
-              </div>
-            `
-          : nothing}
+        ${
+          article.systemNote
+            ? html`
+                <div class="ik-post__note">
+                  ${infoIcon}
+                  <p>${article.systemNote}</p>
+                </div>
+              `
+            : nothing
+        }
 
         <div class="ik-post__body">
           <figure class="ik-post__figure">
             <ik-poster .article=${article}></ik-poster>
-            ${article.picked
-              ? html`<figcaption class="ik-post__pick">
-                  Fairy Picks
-                </figcaption>`
-              : nothing}
+            ${
+              article.picked
+                ? html`<figcaption class="ik-post__pick">
+                    Fairy Picks
+                  </figcaption>`
+                : nothing
+            }
           </figure>
 
           <div class="ik-post__scroll">
@@ -120,68 +126,71 @@ export class IkPostDialog extends IkElement {
               <span>·</span> ${article.minutes} min read
             </p>
 
-            <div
-              class=${`ik-post__content${clamped ? " is-clamped" : ""}`}
-            >
-              ${article.content.map(
-                (paragraph) => html`<p>${paragraph}</p>`,
-              )}
+            <div class=${`ik-post__content${clamped ? " is-clamped" : ""}`}>
+              ${article.content.map((paragraph) => html`<p>${paragraph}</p>`)}
             </div>
 
-            ${needsExpand
-              ? html`
-                  <button
-                    class="ik-post__expand"
-                    type="button"
-                    @click=${this.toggleExpanded}
-                  >
-                    ${this.expanded ? "Collapse" : "Expand"}
-                  </button>
-                `
-              : nothing}
-
-            ${article.quoted
-              ? html`
-                  <blockquote class="ik-quote">
-                    <div class="ik-quote__head">
-                      <span class="ik-quote__label"
-                        >▸ ${article.quoted.feedTitle}</span
-                      >
-                      <span class="ik-tag">[${article.quoted.tag}]</span>
-                    </div>
-                    <strong>${article.quoted.title}</strong>
-                    <p>${article.quoted.excerpt}</p>
-                  </blockquote>
-                `
-              : nothing}
+            ${
+              needsExpand
+                ? html`
+                    <button
+                      class="ik-post__expand"
+                      type="button"
+                      @click=${this.toggleExpanded}
+                    >
+                      ${this.expanded ? "Collapse" : "Expand"}
+                    </button>
+                  `
+                : nothing
+            }
+            ${
+              article.quoted
+                ? html`
+                    <blockquote class="ik-quote">
+                      <div class="ik-quote__head">
+                        <span class="ik-quote__label"
+                          >▸ ${article.quoted.feedTitle}</span
+                        >
+                        <span class="ik-tag">[${article.quoted.tag}]</span>
+                      </div>
+                      <strong>${article.quoted.title}</strong>
+                      <p>${article.quoted.excerpt}</p>
+                    </blockquote>
+                  `
+                : nothing
+            }
 
             <div class="ik-post__tags">
               <span class="ik-chip">#${article.tag.toLowerCase()}</span>
               <span class="ik-chip">#${article.feedId}</span>
-              ${article.picked
-                ? html`<span class="ik-chip ik-chip--blue">starred</span>`
-                : nothing}
+              ${
+                article.picked
+                  ? html`<span class="ik-chip ik-chip--blue">starred</span>`
+                  : nothing
+              }
             </div>
 
-            ${article.link
-              ? html`
-                  <a
-                    class="ik-post__original"
-                    href=${article.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Open original ${externalIcon}
-                  </a>
-                `
-              : html`
-                  <span
-                    class="ik-post__original is-disabled"
-                    title="Connect a real feed to open the source"
-                  >
-                    Open original ${externalIcon}
-                  </span>
-                `}
+            ${
+              article.link
+                ? html`
+                    <a
+                      class="ik-post__original"
+                      href=${article.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open original ${externalIcon}
+                    </a>
+                  `
+                : html`
+                    <span
+                      class="ik-post__original is-disabled"
+                      title="Connect a real feed to open the source"
+                    >
+                      Open original ${externalIcon}
+                    </span>
+                  `
+            }
             ${comments.length > 0 ? this.renderComments(comments) : nothing}
           </div>
         </div>
@@ -198,9 +207,7 @@ export class IkPostDialog extends IkElement {
         ${comments.map(
           (comment, index) => html`
             <article class="ik-comment">
-              <span
-                class="ik-avatar"
-                style=${`--ik-avatar:${comment.color}`}
+              <span class="ik-avatar" style=${`--ik-avatar:${comment.color}`}
                 >${initials(comment.author)}</span
               >
               <div class="ik-comment__body">

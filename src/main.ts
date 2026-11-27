@@ -19,4 +19,3 @@ import "./styles/board.css";
 import "./styles/post.css";
 
 import "./components/ik-app";
-
