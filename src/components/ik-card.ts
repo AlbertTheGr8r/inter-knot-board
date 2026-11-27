@@ -24,6 +24,7 @@ export class IkCard extends IkElement {
     return html`
       <article
         class="ik-card"
+        data-article-id=${article.id}
         tabindex="0"
         role="button"
         aria-label=${`Open post: ${article.title}`}

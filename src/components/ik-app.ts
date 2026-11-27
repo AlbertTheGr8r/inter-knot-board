@@ -15,6 +15,12 @@ import {
   type MindfulState,
 } from "../lib/mindful";
 import { loadMindfulState, saveMindfulState } from "../lib/mindful-storage";
+import {
+  loadCompact,
+  loadReadOnScroll,
+  saveCompact,
+  saveReadOnScroll,
+} from "../lib/preferences";
 import { IkElement } from "../ui/base";
 import { chevronDownIcon } from "../ui/icons";
 import "./ik-board";
@@ -51,6 +57,7 @@ export class IkApp extends IkElement {
     openedAt: { state: true },
     mindful: { state: true },
     compact: { state: true },
+    readOnScroll: { state: true },
     pageSize: { state: true },
     limit: { state: true },
   };
@@ -61,7 +68,8 @@ export class IkApp extends IkElement {
   sourceFilter: string | null = null;
   openedAt = new Map<string, number>();
   mindful: MindfulState = loadMindfulState();
-  compact = false;
+  compact = loadCompact();
+  readOnScroll = loadReadOnScroll();
   pageSize = 24;
   limit = 0;
 
@@ -81,6 +89,7 @@ export class IkApp extends IkElement {
     window.addEventListener("wheel", this.onActivity, { passive: true });
     window.addEventListener("scroll", this.onActivity, { passive: true });
     window.addEventListener("resize", this.onResize);
+    this.classList.toggle("is-compact", this.compact);
     this.lastInteraction = Date.now();
     this.timerId = window.setInterval(this.tickMindful, MINDFUL_TICK_MS);
   }
@@ -120,12 +129,20 @@ export class IkApp extends IkElement {
 
         <main class="ik-main" id="board">
           <ui-tabs-panel value="board">
-            <ik-board .articles=${this.pagedVisible}></ik-board>
+            <ik-board
+              .articles=${this.pagedVisible}
+              .readOnScroll=${this.readOnScroll && this.scope !== "unread"}
+              @ik-mark-read=${this.onMarkRead}
+            ></ik-board>
             ${this.renderBoardFoot()}
           </ui-tabs-panel>
 
           <ui-tabs-panel value="saved">
-            <ik-board .articles=${this.savedArticles}></ik-board>
+            <ik-board
+              .articles=${this.savedArticles}
+              .readOnScroll=${this.readOnScroll && this.scope !== "unread"}
+              @ik-mark-read=${this.onMarkRead}
+            ></ik-board>
           </ui-tabs-panel>
 
           <ui-tabs-panel value="sources">
@@ -154,10 +171,12 @@ export class IkApp extends IkElement {
         <ik-proxy
           .mindful=${this.mindful}
           .compact=${this.compact}
+          .readOnScroll=${this.readOnScroll}
           @ik-mindful-cap=${this.onMindfulCap}
           @ik-mindful-mode=${this.onMindfulMode}
           @ik-mindful-reset=${this.onMindfulReset}
           @ik-density=${this.onDensity}
+          @ik-read-on-scroll=${this.onReadOnScroll}
           @ik-proxy-closed=${this.onProxyClosed}
         ></ik-proxy>
       </ui-tabs>
@@ -504,6 +523,18 @@ export class IkApp extends IkElement {
     );
   };
 
+  private onMarkRead = (event: CustomEvent<string[]>): void => {
+    const ids = new Set(event.detail);
+    this.articles = this.articles.map((article) =>
+      ids.has(article.id) ? { ...article, unread: false } : article,
+    );
+  };
+
+  private onReadOnScroll = (event: CustomEvent<boolean>): void => {
+    this.readOnScroll = event.detail;
+    saveReadOnScroll(this.readOnScroll);
+  };
+
   private markOpened(article: Article): void {
     this.articles = this.articles.map((item) =>
       item.id === article.id ? { ...item, unread: false } : item,
@@ -573,6 +604,7 @@ export class IkApp extends IkElement {
     const detail = (event as CustomEvent<boolean>).detail;
     this.compact = typeof detail === "boolean" ? detail : !this.compact;
     this.classList.toggle("is-compact", this.compact);
+    saveCompact(this.compact);
   };
 
   private onDocumentClick = (event: MouseEvent): void => {

@@ -6,38 +6,65 @@ import {
   MAX_BATCH,
   MIN_BATCH,
 } from "../lib/pagination";
+import {
+  isCardFullyVisible,
+  READ_ON_SCROLL_DWELL_MS,
+} from "../lib/read-on-scroll";
 import { IkElement } from "../ui/base";
 import "./ik-card";
 
 export class IkBoard extends IkElement {
   static properties = {
     articles: { attribute: false },
+    readOnScroll: { type: Boolean },
     columns: { state: true },
   };
 
   articles: Article[] = [];
+  readOnScroll = false;
   columns: Article[][] = [];
 
   private observer?: ResizeObserver;
+  private readObserver?: IntersectionObserver;
+  private readTimers = new Map<Element, number>();
+  private pendingRead = new Set<string>();
+  private readFrame = 0;
+  private readFlush = 0;
+  private interacted = false;
   private frame = 0;
 
   connectedCallback(): void {
     super.connectedCallback();
     this.observer = new ResizeObserver(() => this.scheduleLayout());
     this.observer.observe(this);
+    window.addEventListener("scroll", this.onUserActivity, { passive: true });
+    window.addEventListener("keydown", this.onUserActivity);
   }
 
   disconnectedCallback(): void {
     this.observer?.disconnect();
     this.observer = undefined;
+    this.stopReadObserver();
+    window.removeEventListener("scroll", this.onUserActivity);
+    window.removeEventListener("keydown", this.onUserActivity);
     if (this.frame) cancelAnimationFrame(this.frame);
+    if (this.readFrame) cancelAnimationFrame(this.readFrame);
+    if (this.readFlush) window.clearTimeout(this.readFlush);
     this.frame = 0;
+    this.readFrame = 0;
     super.disconnectedCallback();
   }
 
   protected updated(changed: Map<PropertyKey, unknown>): void {
     if (changed.has("articles")) {
       this.scheduleLayout();
+    }
+    if (
+      changed.has("articles") ||
+      changed.has("columns") ||
+      changed.has("readOnScroll")
+    ) {
+      this.scheduleReadObserver();
     }
   }
 
@@ -158,6 +185,93 @@ export class IkBoard extends IkElement {
         column.every((article, item) => article.id === other[item]!.id)
       );
     });
+  }
+
+  private onUserActivity = (): void => {
+    this.interacted = true;
+  };
+
+  private scheduleReadObserver(): void {
+    if (this.readFrame) return;
+    this.readFrame = requestAnimationFrame(() => {
+      this.readFrame = 0;
+      this.syncReadObserver();
+    });
+  }
+
+  private syncReadObserver(): void {
+    this.stopReadObserver();
+    if (!this.readOnScroll || this.articles.length === 0) return;
+
+    this.readObserver = new IntersectionObserver(this.onIntersection, {
+      threshold: [0, 0.5, 0.98, 1],
+      rootMargin: "-84px 0px -40px 0px",
+    });
+
+    for (const card of this.querySelectorAll(".ik-card")) {
+      this.readObserver.observe(card);
+    }
+  }
+
+  private stopReadObserver(): void {
+    this.readObserver?.disconnect();
+    this.readObserver = undefined;
+    for (const timer of this.readTimers.values()) {
+      window.clearTimeout(timer);
+    }
+    this.readTimers.clear();
+  }
+
+  private onIntersection = (entries: IntersectionObserverEntry[]): void => {
+    if (!this.readOnScroll || document.visibilityState !== "visible") return;
+
+    for (const entry of entries) {
+      const card = entry.target;
+      const id = card.getAttribute("data-article-id");
+      if (!id) continue;
+
+      const fullyVisible = isCardFullyVisible({
+        cardHeight: entry.boundingClientRect.height,
+        visibleHeight: entry.intersectionRect.height,
+        rootHeight: entry.rootBounds?.height ?? window.innerHeight,
+      });
+
+      if (!entry.isIntersecting || !fullyVisible || !this.interacted) {
+        const timer = this.readTimers.get(card);
+        if (timer) window.clearTimeout(timer);
+        this.readTimers.delete(card);
+        continue;
+      }
+
+      if (this.readTimers.has(card)) continue;
+
+      const timer = window.setTimeout(() => {
+        this.readTimers.delete(card);
+        this.queueRead(id);
+      }, READ_ON_SCROLL_DWELL_MS);
+      this.readTimers.set(card, timer);
+    }
+  };
+
+  private queueRead(id: string): void {
+    const article = this.articles.find((item) => item.id === id);
+    if (!article || !article.unread) return;
+
+    this.pendingRead.add(id);
+    if (this.readFlush) window.clearTimeout(this.readFlush);
+    this.readFlush = window.setTimeout(() => {
+      this.readFlush = 0;
+      if (this.pendingRead.size === 0) return;
+      const ids = [...this.pendingRead];
+      this.pendingRead.clear();
+      this.dispatchEvent(
+        new CustomEvent<string[]>("ik-mark-read", {
+          detail: ids,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }, 120);
   }
 }
 

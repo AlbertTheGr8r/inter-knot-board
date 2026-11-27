@@ -20,10 +20,12 @@ export class IkProxy extends IkElement {
   static properties = {
     mindful: { attribute: false },
     compact: { type: Boolean },
+    readOnScroll: { type: Boolean },
   };
 
   mindful: MindfulState = createMindfulState();
   compact = false;
+  readOnScroll = false;
 
   private dialogEl: DialogElement | null = null;
 
@@ -168,6 +170,19 @@ export class IkProxy extends IkElement {
                     <small>Hide excerpts and tighten the wall.</small>
                   </span>
                 </label>
+                <label class="ik-proxy__toggle">
+                  <input
+                    type="checkbox"
+                    .checked=${this.readOnScroll}
+                    @change=${this.toggleReadOnScroll}
+                  />
+                  <span>
+                    <strong>Mark cards read on scroll</strong>
+                    <small>
+                      Requires the whole card for 1.5s. Unread stays a queue.
+                    </small>
+                  </span>
+                </label>
               </section>
 
               <section class="ik-proxy__section">
@@ -220,6 +235,17 @@ export class IkProxy extends IkElement {
     const input = event.target as HTMLInputElement;
     this.dispatchEvent(
       new CustomEvent<boolean>("ik-density", {
+        detail: input.checked,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  };
+
+  private toggleReadOnScroll = (event: Event): void => {
+    const input = event.target as HTMLInputElement;
+    this.dispatchEvent(
+      new CustomEvent<boolean>("ik-read-on-scroll", {
         detail: input.checked,
         bubbles: true,
         composed: true,

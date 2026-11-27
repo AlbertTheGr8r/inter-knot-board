@@ -198,6 +198,10 @@
   cursor: pointer;
 }
 
+.ik-proxy__toggle + .ik-proxy__toggle {
+  margin-top: 14px;
+}
+
 .ik-proxy__toggle input {
   width: 18px;
   height: 18px;
