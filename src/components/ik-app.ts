@@ -3,6 +3,11 @@ import { demoArticles } from "../data/demo";
 import type { Article } from "../data/types";
 import { filterArticles, type Scope } from "../lib/article-filter";
 import {
+  applyDemoState,
+  loadDemoState,
+  saveDemoState,
+} from "../lib/demo-state";
+import {
   MINDFUL_IDLE_MS,
   MINDFUL_TICK_MS,
   createMindfulState,
@@ -62,11 +67,13 @@ export class IkApp extends IkElement {
     limit: { state: true },
   };
 
-  articles: Article[] = demoArticles;
+  private persistedState = loadDemoState();
+
+  articles: Article[] = applyDemoState(demoArticles, this.persistedState);
   section: Section = "board";
   scope: Scope = "all";
   sourceFilter: string | null = null;
-  openedAt = new Map<string, number>();
+  openedAt = new Map(Object.entries(this.persistedState?.openedAt ?? {}));
   mindful: MindfulState = loadMindfulState();
   compact = loadCompact();
   readOnScroll = loadReadOnScroll();
@@ -521,6 +528,7 @@ export class IkApp extends IkElement {
     this.articles = this.articles.map((article) =>
       article.id === id ? { ...article, starred } : article,
     );
+    this.persistReadingState();
   };
 
   private onMarkRead = (event: CustomEvent<string[]>): void => {
@@ -528,6 +536,7 @@ export class IkApp extends IkElement {
     this.articles = this.articles.map((article) =>
       ids.has(article.id) ? { ...article, unread: false } : article,
     );
+    this.persistReadingState();
   };
 
   private onReadOnScroll = (event: CustomEvent<boolean>): void => {
@@ -543,6 +552,19 @@ export class IkApp extends IkElement {
     const opened = new Map(this.openedAt);
     opened.set(article.id, Date.now());
     this.openedAt = opened;
+    this.persistReadingState();
+  }
+
+  private persistReadingState(): void {
+    saveDemoState({
+      readIds: this.articles
+        .filter((article) => !article.unread)
+        .map((article) => article.id),
+      starredIds: this.articles
+        .filter((article) => article.starred)
+        .map((article) => article.id),
+      openedAt: Object.fromEntries(this.openedAt),
+    });
   }
 
   private setScope(value: Scope): void {
