@@ -1,6 +1,6 @@
-import { html, type TemplateResult } from "lit";
+import { html, nothing, type TemplateResult } from "lit";
 import { IkElement } from "../ui/base";
-import { gearIcon, refreshIcon } from "../ui/icons";
+import { refreshIcon } from "../ui/icons";
 
 export class IkTopbar extends IkElement {
   static properties = {
@@ -47,29 +47,34 @@ export class IkTopbar extends IkElement {
           </div>
         </div>
 
-        <ui-tabs-list aria-label="Inter-Knot views" class="ik-tabs">
+        <ui-tabs-list aria-label="Inter-Knot sections" class="ik-tabs">
           <ui-tabs-tab value="board">
-            <button type="button">Board</button>
-          </ui-tabs-tab>
-          <ui-tabs-tab value="unread">
-            <button type="button">Unread</button>
+            <button
+              type="button"
+              aria-label=${
+                this.unread > 0 ? `Board, ${this.unread} unread` : "Board"
+              }
+            >
+              ${
+                this.unread > 0
+                  ? html`<span class="ik-tab-alert" aria-hidden="true">!</span>`
+                  : nothing
+              }
+              <span>Board</span>
+            </button>
           </ui-tabs-tab>
           <ui-tabs-tab value="saved">
             <button type="button">Saved</button>
           </ui-tabs-tab>
+          <ui-tabs-tab value="sources">
+            <button type="button">Sources</button>
+          </ui-tabs-tab>
+          <ui-tabs-tab value="history">
+            <button type="button">History</button>
+          </ui-tabs-tab>
         </ui-tabs-list>
 
-        <div class="ik-topbar__right">
-          <button
-            class="ik-icon-btn"
-            type="button"
-            aria-label="Toggle compact density"
-            title="Toggle compact density"
-            @click=${this.toggleDensity}
-          >
-            ${gearIcon}
-          </button>
-        </div>
+        <div class="ik-topbar__right"></div>
       </header>
     `;
   }
@@ -83,12 +88,6 @@ export class IkTopbar extends IkElement {
     window.setTimeout(() => {
       this.busy = false;
     }, 900);
-  };
-
-  private toggleDensity = (): void => {
-    this.dispatchEvent(
-      new CustomEvent("ik-density", { bubbles: true, composed: true }),
-    );
   };
 }
 

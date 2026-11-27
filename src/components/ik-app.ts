@@ -1,28 +1,45 @@
 import { html, nothing, type TemplateResult } from "lit";
 import { demoArticles } from "../data/demo";
 import type { Article } from "../data/types";
+import { filterArticles, type Scope } from "../lib/article-filter";
 import { IkElement } from "../ui/base";
 import { chevronDownIcon } from "../ui/icons";
 import "./ik-board";
+import "./ik-history";
 import "./ik-post-dialog";
+import "./ik-sources";
 import "./ik-topbar";
+import type { HistoryEntry } from "./ik-history";
 import type { IkPostDialog } from "./ik-post-dialog";
+import type { SourceSummary } from "./ik-sources";
 
-interface FilterOption {
-  value: string;
+type Section = "board" | "saved" | "sources" | "history";
+
+interface ScopeOption {
+  value: Scope;
   label: string;
 }
+
+const SCOPE_OPTIONS: ScopeOption[] = [
+  { value: "all", label: "All" },
+  { value: "unread", label: "Unread" },
+  { value: "read", label: "Read" },
+];
 
 export class IkApp extends IkElement {
   static properties = {
     articles: { attribute: false },
-    tab: { state: true },
-    feedFilter: { state: true },
+    section: { state: true },
+    scope: { state: true },
+    sourceFilter: { state: true },
+    openedAt: { state: true },
   };
 
   articles: Article[] = demoArticles;
-  tab = "board";
-  feedFilter = "all";
+  section: Section = "board";
+  scope: Scope = "all";
+  sourceFilter: string | null = null;
+  openedAt = new Map<string, number>();
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -41,8 +58,8 @@ export class IkApp extends IkElement {
       <a class="ik-skip" href="#board">Skip to board</a>
 
       <ui-tabs
-        default-value="board"
-        @valuechange=${this.onTabChange}
+        .value=${this.section}
+        @valuechange=${this.onSectionChange}
         @ik-open-post=${this.onOpenPost}
       >
         <ik-topbar
@@ -57,53 +74,60 @@ export class IkApp extends IkElement {
           <ui-tabs-panel value="board">
             <ik-board .articles=${this.visible}></ik-board>
           </ui-tabs-panel>
-          <ui-tabs-panel value="unread">
-            <ik-board .articles=${this.visible}></ik-board>
-          </ui-tabs-panel>
+
           <ui-tabs-panel value="saved">
-            <ik-board .articles=${this.visible}></ik-board>
+            <ik-board .articles=${this.savedArticles}></ik-board>
+          </ui-tabs-panel>
+
+          <ui-tabs-panel value="sources">
+            <ik-sources
+              .sources=${this.sourceSummaries}
+              @ik-open-source=${this.onOpenSource}
+              @ik-refresh=${this.onRefresh}
+            ></ik-sources>
+          </ui-tabs-panel>
+
+          <ui-tabs-panel value="history">
+            <ik-history
+              .entries=${this.historyEntries}
+              @ik-open-post=${this.onOpenPost}
+            ></ik-history>
           </ui-tabs-panel>
         </main>
 
-        <details class="ik-filter">
-          <summary class="ik-filter__button">
-            <span>${this.filterLabel}</span>
-            ${chevronDownIcon}
-          </summary>
-          <div class="ik-filter__menu" role="listbox" aria-label="Filter posts">
-            ${this.coreFilters.map(
+        ${this.showFilter ? this.renderFilter() : nothing}
+
+        <ik-post-dialog
+          @ik-post-closed=${this.onPostClosed}
+          @ik-toggle-save=${this.onToggleSave}
+        ></ik-post-dialog>
+      </ui-tabs>
+    `;
+  }
+
+  private renderFilter(): TemplateResult {
+    const options = SCOPE_OPTIONS;
+    const sources = this.filterSources;
+
+    return html`
+      <details class="ik-filter">
+        <summary class="ik-filter__button">
+          <span>${this.filterLabel}</span>
+          ${chevronDownIcon}
+        </summary>
+
+        <div class="ik-filter__menu">
+          <div class="ik-filter__scope" role="group" aria-label="Post scope">
+            ${options.map(
               (option) => html`
                 <button
                   type="button"
-                  role="option"
-                  aria-selected=${
-                    option.value === this.feedFilter ? "true" : "false"
-                  }
-                  @click=${() => this.setFilter(option.value)}
+                  aria-pressed=${option.value === this.scope ? "true" : "false"}
+                  @click=${() => this.setScope(option.value)}
                 >
                   <span>${option.label}</span>
                   ${
-                    option.value === this.feedFilter
-                      ? html`<span class="ik-filter__check">✓</span>`
-                      : nothing
-                  }
-                </button>
-              `,
-            )}
-            <div class="ik-filter__sep" role="separator"></div>
-            ${this.feedFilters.map(
-              (option) => html`
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected=${
-                    option.value === this.feedFilter ? "true" : "false"
-                  }
-                  @click=${() => this.setFilter(option.value)}
-                >
-                  <span>${option.label}</span>
-                  ${
-                    option.value === this.feedFilter
+                    option.value === this.scope
                       ? html`<span class="ik-filter__check">✓</span>`
                       : nothing
                   }
@@ -111,29 +135,94 @@ export class IkApp extends IkElement {
               `,
             )}
           </div>
-        </details>
 
-        <ik-post-dialog></ik-post-dialog>
-      </ui-tabs>
+          <div
+            class="ik-filter__sources"
+            role="listbox"
+            aria-label="Filter by source"
+          >
+            <span class="ik-filter__label">Sources</span>
+            <button
+              type="button"
+              role="option"
+              aria-selected=${this.sourceFilter === null ? "true" : "false"}
+              @click=${() => this.setSource(null)}
+            >
+              <span class="ik-filter__source-name">All sources</span>
+              ${
+                this.sourceFilter === null
+                  ? html`<span class="ik-filter__check">✓</span>`
+                  : nothing
+              }
+            </button>
+            ${sources.map(
+              (source) => html`
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected=${
+                    this.sourceFilter === source.id ? "true" : "false"
+                  }
+                  @click=${() => this.setSource(source.id)}
+                >
+                  <span
+                    class="ik-filter__source-dot"
+                    style=${`--ik-source:${source.color}`}
+                  ></span>
+                  <span class="ik-filter__source-name">${source.title}</span>
+                  <span class="ik-filter__source-count">${source.unread}</span>
+                </button>
+              `,
+            )}
+          </div>
+        </div>
+      </details>
     `;
   }
 
+  private get showFilter(): boolean {
+    return this.section === "board" || this.section === "saved";
+  }
+
+  private get sectionArticles(): Article[] {
+    if (this.section === "saved") {
+      return this.articles.filter((article) => article.starred);
+    }
+    return this.articles;
+  }
+
   private get visible(): Article[] {
-    return this.articles.filter((article) => {
-      if (this.tab === "unread" && !article.unread) return false;
-      if (this.tab === "saved" && !article.starred) return false;
+    return filterArticles(
+      this.section === "saved" ? [] : this.articles,
+      this.scope,
+      this.sourceFilter,
+    );
+  }
 
-      if (this.feedFilter === "unread" && !article.unread) return false;
-      if (this.feedFilter === "saved" && !article.starred) return false;
-      if (
-        this.feedFilter.startsWith("feed:") &&
-        article.feedId !== this.feedFilter.slice(5)
-      ) {
-        return false;
-      }
+  private get savedArticles(): Article[] {
+    return filterArticles(
+      this.articles.filter((article) => article.starred),
+      this.scope,
+      this.sourceFilter,
+    );
+  }
 
-      return true;
-    });
+  private get filterSources(): SourceSummary[] {
+    return this.summarize(this.sectionArticles);
+  }
+
+  private get sourceSummaries(): SourceSummary[] {
+    return this.summarize(this.articles);
+  }
+
+  private get historyEntries(): HistoryEntry[] {
+    return [...this.openedAt.entries()]
+      .map(([id, openedAt]) => {
+        const article = this.articles.find((item) => item.id === id);
+        return article ? { article, openedAt } : null;
+      })
+      .filter((entry): entry is HistoryEntry => entry !== null)
+      .sort((a, b) => b.openedAt - a.openedAt);
   }
 
   private get unreadCount(): number {
@@ -144,49 +233,103 @@ export class IkApp extends IkElement {
     return Math.max(1, Math.min(60, Math.floor(this.articles.length / 4) + 1));
   }
 
-  private get coreFilters(): FilterOption[] {
-    return [
-      { value: "all", label: "All Feeds" },
-      { value: "unread", label: "Unread only" },
-      { value: "saved", label: "Saved" },
-    ];
-  }
-
-  private get feedFilters(): FilterOption[] {
-    const feeds = new Map<string, string>();
-    for (const article of this.articles) {
-      feeds.set(article.feedId, article.feedTitle);
-    }
-    return [...feeds].map(([id, label]) => ({
-      value: `feed:${id}`,
-      label,
-    }));
-  }
-
   private get filterLabel(): string {
-    const selected = [...this.coreFilters, ...this.feedFilters].find(
-      (option) => option.value === this.feedFilter,
+    if (this.sourceFilter) {
+      return (
+        this.articles.find((article) => article.feedId === this.sourceFilter)
+          ?.feedTitle ?? "Source"
+      );
+    }
+
+    return (
+      SCOPE_OPTIONS.find((option) => option.value === this.scope)?.label ??
+      "All"
     );
-    return selected?.label ?? "All Feeds";
   }
 
-  private onTabChange = (event: Event): void => {
-    const detail = (event as CustomEvent<{ value: string }>).detail;
-    if (detail?.value) {
-      this.tab = detail.value;
+  private summarize(articles: Article[]): SourceSummary[] {
+    const sources = new Map<string, SourceSummary>();
+
+    for (const article of articles) {
+      const existing = sources.get(article.feedId);
+      if (existing) {
+        existing.total += 1;
+        if (article.unread) existing.unread += 1;
+        continue;
+      }
+
+      sources.set(article.feedId, {
+        id: article.feedId,
+        title: article.feedTitle,
+        color: article.feedColor,
+        unread: article.unread ? 1 : 0,
+        total: 1,
+      });
     }
+
+    return [...sources.values()].sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  private onSectionChange = (event: Event): void => {
+    const detail = (event as CustomEvent<{ value: Section }>).detail;
+    if (!detail?.value) return;
+
+    this.section = detail.value;
+    this.closeFilter();
+  };
+
+  private onOpenSource = (event: CustomEvent<string>): void => {
+    this.sourceFilter = event.detail;
+    this.section = "board";
+    this.closeFilter();
   };
 
   private onOpenPost = (event: CustomEvent<Article>): void => {
+    const article = event.detail;
+    this.markOpened(article);
+    const updated =
+      this.articles.find((item) => item.id === article.id) ?? article;
     const dialog = this.querySelector<IkPostDialog>("ik-post-dialog");
-    void dialog?.open(event.detail);
+    void dialog?.open(updated);
   };
 
-  private setFilter = (value: string): void => {
-    this.feedFilter = value;
+  private onPostClosed = (): void => {
+    // Reserved for the mindful timer, which pauses while the reader is open.
+  };
+
+  private onToggleSave = (
+    event: CustomEvent<{ id: string; starred: boolean }>,
+  ) => {
+    const { id, starred } = event.detail;
+    this.articles = this.articles.map((article) =>
+      article.id === id ? { ...article, starred } : article,
+    );
+  };
+
+  private markOpened(article: Article): void {
+    this.articles = this.articles.map((item) =>
+      item.id === article.id ? { ...item, unread: false } : item,
+    );
+
+    const opened = new Map(this.openedAt);
+    opened.set(article.id, Date.now());
+    this.openedAt = opened;
+  }
+
+  private setScope(value: Scope): void {
+    this.scope = value;
+    this.closeFilter();
+  }
+
+  private setSource(value: string | null): void {
+    this.sourceFilter = value;
+    this.closeFilter();
+  }
+
+  private closeFilter(): void {
     const details = this.querySelector<HTMLDetailsElement>(".ik-filter");
     if (details) details.open = false;
-  };
+  }
 
   private onRefresh = (): void => {
     this.classList.add("is-syncing");

@@ -242,7 +242,8 @@ ik-app.is-syncing .ik-board {
   transition: opacity 0.18s ease;
 }
 
-/* Bottom-right feed picker */
+/* Bottom-right filter. The menu opens upward: sources scroll above the
+   pinned scope group, with All nearest the pill. */
 .ik-filter {
   position: fixed;
   right: 26px;
@@ -254,6 +255,7 @@ ik-app.is-syncing .ik-board {
   display: flex;
   align-items: center;
   gap: 12px;
+  max-width: min(260px, 70vw);
   padding: 10px 16px;
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 999px;
@@ -267,11 +269,18 @@ ik-app.is-syncing .ik-board {
   box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.75);
 }
 
+.ik-filter__button > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ik-filter__button::-webkit-details-marker {
   display: none;
 }
 
 .ik-filter__button svg {
+  flex: 0 0 auto;
   width: 14px;
   height: 14px;
   transition: transform 0.16s ease;
@@ -285,10 +294,11 @@ ik-app.is-syncing .ik-board {
   position: absolute;
   right: 0;
   bottom: calc(100% + 10px);
-  min-width: 232px;
-  max-height: min(60vh, 420px);
-  overflow: auto;
-  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  width: min(292px, calc(100vw - 28px));
+  max-height: min(70vh, 520px);
+  overflow: hidden;
   border: 1px solid var(--ik-line-strong);
   border-radius: 14px;
   background: rgba(24, 24, 27, 0.98);
@@ -296,11 +306,40 @@ ik-app.is-syncing .ik-board {
   backdrop-filter: blur(16px);
 }
 
+.ik-filter__sources {
+  order: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 6px;
+}
+
+.ik-filter__scope {
+  order: 2;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column-reverse;
+  gap: 2px;
+  padding: 6px;
+  border-top: 1px solid var(--ik-line);
+  background: rgba(14, 14, 16, 0.72);
+}
+
+.ik-filter__label {
+  display: block;
+  padding: 5px 10px 3px;
+  color: var(--ik-dim);
+  font-family: var(--ik-font-display);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 .ik-filter__menu button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 8px;
   width: 100%;
   padding: 9px 10px;
   border: 0;
@@ -318,19 +357,41 @@ ik-app.is-syncing .ik-board {
   color: #fff;
 }
 
-.ik-filter__menu button[aria-selected="true"] {
+.ik-filter__menu button[aria-selected="true"],
+.ik-filter__scope button[aria-pressed="true"] {
   background: var(--ik-accent);
   color: var(--ik-accent-ink);
 }
 
-.ik-filter__check {
-  font-size: 11px;
+.ik-filter__source-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--ik-source, var(--ik-muted));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ik-source) 55%, transparent);
 }
 
-.ik-filter__sep {
-  height: 1px;
-  margin: 5px 4px;
-  background: var(--ik-line);
+.ik-filter__source-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ik-filter__source-count {
+  flex: 0 0 auto;
+  color: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
+}
+
+.ik-filter__check {
+  margin-left: auto;
+  font-size: 11px;
 }
 
 @media (max-width: 1180px) {

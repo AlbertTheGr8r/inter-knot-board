@@ -1,0 +1,299 @@
+/* Sources and history are pages, not boards. They share one calm frame. */
+.ik-view {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 14px 26px 120px;
+}
+
+.ik-view__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 0 22px;
+  border-bottom: 1px solid var(--ik-line);
+}
+
+.ik-view__mark {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ik-accent);
+  font-family: var(--ik-font-display);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+}
+
+.ik-view__head h2 {
+  margin: 0;
+  font-size: clamp(30px, 4.2vw, 46px);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  line-height: 0.95;
+}
+
+.ik-view__head p {
+  max-width: 60ch;
+  margin: 10px 0 0;
+  color: var(--ik-muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.ik-view__count {
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border: 1px solid var(--ik-line-strong);
+  border-radius: 999px;
+  color: var(--ik-cyan);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ik-view__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border: 1px solid var(--ik-line-strong);
+  border-radius: 9px;
+  background: rgba(18, 18, 20, 0.7);
+  color: var(--ik-text-soft);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.ik-view__action svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ik-view__action:hover:not(:disabled) {
+  border-color: rgba(241, 216, 10, 0.4);
+  color: var(--ik-accent);
+}
+
+.ik-view__action:disabled {
+  color: var(--ik-dim);
+  cursor: not-allowed;
+}
+
+.ik-view__note {
+  margin: 20px 0 22px;
+  padding: 14px 16px;
+  border: 1px solid rgba(107, 208, 255, 0.18);
+  border-left: 3px solid var(--ik-blue);
+  border-radius: 0 10px 10px 0;
+  background: rgba(12, 24, 32, 0.5);
+  color: var(--ik-text-soft);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.ik-view__note strong {
+  color: var(--ik-blue);
+}
+
+.ik-source-list,
+.ik-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--ik-line);
+}
+
+.ik-source-row,
+.ik-history-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--ik-line);
+  background: transparent;
+  color: var(--ik-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ik-source-row:hover,
+.ik-history-row:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.ik-avatar--source {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.ik-source-row__body,
+.ik-history-row__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ik-source-row__body strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ik-source-row__body span,
+.ik-history-row__source {
+  overflow: hidden;
+  color: var(--ik-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ik-source-row__count {
+  flex: 0 0 auto;
+  color: var(--ik-cyan);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ik-source-row__chevron {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  color: var(--ik-dim);
+}
+
+.ik-source-row__chevron svg {
+  width: 14px;
+  height: 14px;
+  transform: rotate(-90deg);
+}
+
+.ik-view__foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 20px;
+}
+
+.ik-view__foot > span {
+  color: var(--ik-dim);
+  font-size: 11px;
+}
+
+.ik-view__empty {
+  margin: 12vh auto 0;
+  max-width: 420px;
+  text-align: center;
+  color: var(--ik-muted);
+}
+
+.ik-view__empty > span {
+  color: var(--ik-accent);
+  font-family: var(--ik-font-display);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+
+.ik-view__empty h3 {
+  margin: 12px 0 8px;
+  color: var(--ik-text);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.ik-view__empty p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* History rows are denser and put the opened time first. */
+.ik-history-row {
+  display: grid;
+  grid-template-columns: 54px 36px minmax(0, 1fr) auto;
+}
+
+.ik-history-row__time {
+  color: var(--ik-dim);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ik-history-row__body strong {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ik-history-row__open {
+  color: var(--ik-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1180px) {
+  .ik-view {
+    padding-inline: 18px;
+  }
+}
+
+@media (max-width: 680px) {
+  .ik-view {
+    padding: 8px 12px 100px;
+  }
+
+  .ik-view__head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 6px;
+  }
+
+  .ik-view__head h2 {
+    font-size: 34px;
+  }
+
+  .ik-history-row {
+    grid-template-columns: 38px 32px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .ik-history-row__open {
+    display: none;
+  }
+
+  .ik-source-row__count {
+    display: none;
+  }
+}

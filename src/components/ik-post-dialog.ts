@@ -8,6 +8,7 @@ import {
   externalIcon,
   heartIcon,
   infoIcon,
+  starIcon,
 } from "../ui/icons";
 import "./ik-poster";
 
@@ -19,21 +20,30 @@ export class IkPostDialog extends IkElement {
   static properties = {
     article: { attribute: false },
     expanded: { state: true },
+    saved: { state: true },
   };
 
   article: Article | null = null;
   expanded = false;
+  saved = false;
 
   private dialogEl: DialogElement | null = null;
 
   protected async firstUpdated(): Promise<void> {
     await customElements.whenDefined("ui-dialog");
     this.dialogEl = this.querySelector<DialogElement>("ui-dialog");
+    this.dialogEl?.addEventListener("openchange", this.onDialogChange);
+  }
+
+  disconnectedCallback(): void {
+    this.dialogEl?.removeEventListener("openchange", this.onDialogChange);
+    super.disconnectedCallback();
   }
 
   async open(article: Article): Promise<void> {
     this.article = article;
     this.expanded = false;
+    this.saved = Boolean(article.starred);
     await this.updateComplete;
 
     if (!this.dialogEl) {
@@ -78,15 +88,27 @@ export class IkPostDialog extends IkElement {
               }
             </span>
           </div>
-          <ui-dialog-close>
+          <div class="ik-post__actions">
             <button
-              class="ik-post__close"
+              class=${`ik-post__save${this.saved ? " is-saved" : ""}`}
               type="button"
-              aria-label="Close post"
+              aria-pressed=${this.saved ? "true" : "false"}
+              aria-label=${this.saved ? "Remove from saved" : "Save post"}
+              @click=${this.toggleSave}
             >
-              ${closeIcon}
+              ${starIcon}
+              <span>${this.saved ? "Saved" : "Save"}</span>
             </button>
-          </ui-dialog-close>
+            <ui-dialog-close>
+              <button
+                class="ik-post__close"
+                type="button"
+                aria-label="Close post"
+              >
+                ${closeIcon}
+              </button>
+            </ui-dialog-close>
+          </div>
         </div>
 
         ${
@@ -229,6 +251,31 @@ export class IkPostDialog extends IkElement {
 
   private toggleExpanded = (): void => {
     this.expanded = !this.expanded;
+  };
+
+  private toggleSave = (): void => {
+    if (!this.article) return;
+
+    this.saved = !this.saved;
+    this.dispatchEvent(
+      new CustomEvent("ik-toggle-save", {
+        detail: { id: this.article.id, starred: this.saved },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  };
+
+  private onDialogChange = (event: Event): void => {
+    const detail = (event as CustomEvent<{ value: boolean }>).detail;
+    if (detail?.value === false) {
+      this.dispatchEvent(
+        new CustomEvent("ik-post-closed", {
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
   };
 }
 

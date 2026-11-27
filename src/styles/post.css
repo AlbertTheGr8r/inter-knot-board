@@ -96,12 +96,53 @@ ui-dialog-close {
   color: var(--ik-red-bright);
 }
 
+.ik-post__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.ik-post__save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--ik-line-strong);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--ik-text-soft);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.ik-post__save svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ik-post__save:hover {
+  border-color: rgba(241, 216, 10, 0.4);
+  color: var(--ik-accent);
+}
+
+.ik-post__save.is-saved {
+  border-color: rgba(241, 216, 10, 0.5);
+  background: rgba(241, 216, 10, 0.12);
+  color: var(--ik-accent);
+}
+
 .ik-post__close {
   display: grid;
   place-items: center;
   width: 52px;
   height: 38px;
-  margin-left: auto;
   padding: 0;
   border: 0;
   border-radius: 9px;

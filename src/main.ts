@@ -17,5 +17,6 @@ import "./styles/chrome.css";
 import "./styles/poster.css";
 import "./styles/board.css";
 import "./styles/post.css";
+import "./styles/views.css";
 
 import "./components/ik-app";
