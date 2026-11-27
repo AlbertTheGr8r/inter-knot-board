@@ -7,6 +7,7 @@ import {
   MINDFUL_TICK_MS,
   createMindfulState,
   drainMindful,
+  isMindfulEmpty,
   rechargeMindful,
   setMindfulCap,
   setMindfulMode,
@@ -22,6 +23,7 @@ import "./ik-post-dialog";
 import "./ik-proxy";
 import "./ik-sources";
 import "./ik-topbar";
+import type { IkBoard } from "./ik-board";
 import type { HistoryEntry } from "./ik-history";
 import type { IkPostDialog } from "./ik-post-dialog";
 import type { IkProxy } from "./ik-proxy";
@@ -49,6 +51,8 @@ export class IkApp extends IkElement {
     openedAt: { state: true },
     mindful: { state: true },
     compact: { state: true },
+    pageSize: { state: true },
+    limit: { state: true },
   };
 
   articles: Article[] = demoArticles;
@@ -58,6 +62,8 @@ export class IkApp extends IkElement {
   openedAt = new Map<string, number>();
   mindful: MindfulState = loadMindfulState();
   compact = false;
+  pageSize = 24;
+  limit = 0;
 
   private timerId = 0;
   private lastInteraction = Date.now();
@@ -74,8 +80,13 @@ export class IkApp extends IkElement {
     window.addEventListener("pointerdown", this.onActivity, { passive: true });
     window.addEventListener("wheel", this.onActivity, { passive: true });
     window.addEventListener("scroll", this.onActivity, { passive: true });
+    window.addEventListener("resize", this.onResize);
     this.lastInteraction = Date.now();
     this.timerId = window.setInterval(this.tickMindful, MINDFUL_TICK_MS);
+  }
+
+  protected firstUpdated(): void {
+    void this.updateComplete.then(() => this.syncPageSize(true));
   }
 
   disconnectedCallback(): void {
@@ -86,6 +97,7 @@ export class IkApp extends IkElement {
     window.removeEventListener("pointerdown", this.onActivity);
     window.removeEventListener("wheel", this.onActivity);
     window.removeEventListener("scroll", this.onActivity);
+    window.removeEventListener("resize", this.onResize);
     window.clearInterval(this.timerId);
     super.disconnectedCallback();
   }
@@ -108,7 +120,8 @@ export class IkApp extends IkElement {
 
         <main class="ik-main" id="board">
           <ui-tabs-panel value="board">
-            <ik-board .articles=${this.visible}></ik-board>
+            <ik-board .articles=${this.pagedVisible}></ik-board>
+            ${this.renderBoardFoot()}
           </ui-tabs-panel>
 
           <ui-tabs-panel value="saved">
@@ -226,6 +239,48 @@ export class IkApp extends IkElement {
     `;
   }
 
+  private renderBoardFoot(): TemplateResult | typeof nothing {
+    if (this.visible.length === 0) return nothing;
+
+    if (!this.hasMore) {
+      return html`
+        <div class="ik-board-foot">
+          <span class="ik-board-foot__mark">[ END ]</span>
+          <span>You're all caught up.</span>
+        </div>
+      `;
+    }
+
+    if (isMindfulEmpty(this.mindful)) {
+      return html`
+        <div class="ik-board-foot">
+          <button class="ik-board-foot__button" type="button" disabled>
+            Load more
+          </button>
+          <button
+            class="ik-board-foot__link"
+            type="button"
+            @click=${this.onOpenProxy}
+          >
+            Cap reached. Refill in Proxy.
+          </button>
+        </div>
+      `;
+    }
+
+    return html`
+      <div class="ik-board-foot">
+        <button
+          class="ik-board-foot__button"
+          type="button"
+          @click=${this.loadMore}
+        >
+          Load more
+        </button>
+      </div>
+    `;
+  }
+
   private get showFilter(): boolean {
     return this.section === "board" || this.section === "saved";
   }
@@ -238,11 +293,15 @@ export class IkApp extends IkElement {
   }
 
   private get visible(): Article[] {
-    return filterArticles(
-      this.section === "saved" ? [] : this.articles,
-      this.scope,
-      this.sourceFilter,
-    );
+    return filterArticles(this.articles, this.scope, this.sourceFilter);
+  }
+
+  private get pagedVisible(): Article[] {
+    return this.visible.slice(0, this.limit || this.pageSize);
+  }
+
+  private get hasMore(): boolean {
+    return this.visible.length > (this.limit || this.pageSize);
   }
 
   private get savedArticles(): Article[] {
@@ -321,12 +380,14 @@ export class IkApp extends IkElement {
     }
     this.section = detail.value;
     this.closeFilter();
+    if (detail.value === "board") this.resetPagination();
   };
 
   private onOpenSource = (event: CustomEvent<string>): void => {
     this.sourceFilter = event.detail;
     this.section = "board";
     this.closeFilter();
+    this.resetPagination();
   };
 
   private onOpenPost = (event: CustomEvent<Article>): void => {
@@ -456,12 +517,47 @@ export class IkApp extends IkElement {
   private setScope(value: Scope): void {
     this.scope = value;
     this.closeFilter();
+    this.resetPagination();
   }
 
   private setSource(value: string | null): void {
     this.sourceFilter = value;
     this.closeFilter();
+    this.resetPagination();
   }
+
+  private loadMore = (): void => {
+    if (isMindfulEmpty(this.mindful)) return;
+
+    const board = this.getBoard();
+    const next = board?.getBatchSize() ?? this.pageSize;
+    this.pageSize = next;
+    this.limit = (this.limit || next) + next;
+  };
+
+  private resetPagination(): void {
+    this.limit = 0;
+    void this.updateComplete.then(() => this.syncPageSize(true));
+  }
+
+  private syncPageSize(force = false): void {
+    if (this.section !== "board") return;
+
+    const board = this.getBoard();
+    const size = board?.getBatchSize() ?? this.pageSize;
+    this.pageSize = size;
+    if (force || this.limit === 0) {
+      this.limit = size;
+    }
+  }
+
+  private getBoard(): IkBoard | null {
+    return this.querySelector<IkBoard>('ui-tabs-panel[value="board"] ik-board');
+  }
+
+  private onResize = (): void => {
+    this.syncPageSize(false);
+  };
 
   private closeFilter(): void {
     const details = this.querySelector<HTMLDetailsElement>(".ik-filter");

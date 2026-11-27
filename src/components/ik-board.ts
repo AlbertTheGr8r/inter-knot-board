@@ -1,5 +1,11 @@
 import { html, type TemplateResult } from "lit";
 import type { Article } from "../data/types";
+import {
+  computeBatchSize,
+  DEFAULT_SCREENS,
+  MAX_BATCH,
+  MIN_BATCH,
+} from "../lib/pagination";
 import { IkElement } from "../ui/base";
 import "./ik-card";
 
@@ -76,11 +82,48 @@ export class IkBoard extends IkElement {
     });
   }
 
+  /**
+   * How many cards make roughly five screens at the current column count.
+   * The app uses this for both the first page and each Load more click.
+   */
+  getBatchSize(screens = DEFAULT_SCREENS): number {
+    const width = this.clientWidth || window.innerWidth;
+    const columns = this.columnsForWidth(width);
+    const viewport = Math.max(
+      360,
+      (window.visualViewport?.height ?? window.innerHeight) - 110,
+    );
+    const cards = [...this.querySelectorAll<HTMLElement>(".ik-card")];
+    const heights = cards
+      .map((card) => card.getBoundingClientRect().height)
+      .filter((height) => height > 0);
+    const averageCardHeight =
+      heights.length > 0
+        ? heights.reduce((sum, height) => sum + height, 0) / heights.length
+        : this.articles[0]
+          ? this.estimate(this.articles[0])
+          : 420;
+
+    return computeBatchSize({
+      columns,
+      viewportHeight: viewport,
+      averageCardHeight,
+      gap: 16,
+      screens,
+      min: MIN_BATCH,
+      max: MAX_BATCH,
+    });
+  }
+
+  private columnsForWidth(width: number): number {
+    return width >= 1480 ? 4 : width >= 1080 ? 3 : width >= 720 ? 2 : 1;
+  }
+
   private layout(): void {
     const width = this.clientWidth;
     if (!width || this.articles.length === 0) return;
 
-    const count = width >= 1480 ? 4 : width >= 1080 ? 3 : width >= 720 ? 2 : 1;
+    const count = this.columnsForWidth(width);
 
     const columns = Array.from({ length: count }, (): Article[] => []);
     const heights = new Array<number>(count).fill(0);
