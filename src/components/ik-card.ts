@@ -57,6 +57,13 @@ export class IkCard extends IkElement {
         </div>
 
         <div class="ik-card__body">
+          <div class="ik-card__source">
+            <span
+              class="ik-card__source-mark"
+              style=${`--ik-source:${article.feedColor}`}
+            ></span>
+            <span>${article.feedTitle}</span>
+          </div>
           <p class="ik-card__title">
             <span class=${tagClass}>[${article.tag}]</span>
             ${article.title}

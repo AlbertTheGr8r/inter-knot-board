@@ -166,7 +166,35 @@ ui-tabs-panel[value="saved"] .ik-board {
 }
 
 .ik-card__body {
-  padding: 12px 13px 14px;
+  padding: 10px 13px 14px;
+}
+
+.ik-card__source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-bottom: 6px;
+  color: var(--ik-muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.ik-card__source > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ik-card__source-mark {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--ik-source, var(--ik-muted));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ik-source) 55%, transparent);
 }
 
 .ik-card__title {
