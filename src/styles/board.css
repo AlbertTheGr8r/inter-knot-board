@@ -1,0 +1,360 @@
+ui-tabs {
+  display: block;
+}
+
+ui-tabs-panel {
+  display: block;
+}
+
+ui-tabs-panel[hidden] {
+  display: none !important;
+}
+
+.ik-main {
+  min-height: 100vh;
+  padding-top: calc(var(--ik-topbar-h) + 10px);
+}
+
+.ik-board {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ik-gap);
+  width: 100%;
+  max-width: 1880px;
+  margin: 0 auto;
+  padding: 0 26px 110px;
+}
+
+.ik-board__col {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--ik-gap);
+  min-width: 0;
+}
+
+.ik-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ik-radius);
+  background: var(--ik-surface-2);
+  box-shadow: var(--ik-shadow-card);
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.ik-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 24px 50px -24px rgba(0, 0, 0, 0.95),
+    0 0 0 1px rgba(241, 216, 10, 0.25);
+}
+
+.ik-card:focus-visible {
+  outline: 2px solid var(--ik-accent);
+  outline-offset: 3px;
+}
+
+.ik-card__media {
+  position: relative;
+  aspect-ratio: var(--ik-aspect, 1.2);
+  overflow: hidden;
+  background: #111;
+}
+
+.ik-card__media > ik-poster {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ik-card__media svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ik-card:hover .ik-card__media svg {
+  transform: scale(1.035);
+}
+
+.ik-card__media::after {
+  content: "";
+  position: absolute;
+  inset: 42% 0 0;
+  z-index: 1;
+  background: linear-gradient(transparent, rgba(5, 5, 6, 0.86) 88%);
+  pointer-events: none;
+}
+
+.ik-card__time {
+  position: absolute;
+  top: 10px;
+  left: 11px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.9);
+}
+
+.ik-card__time svg {
+  width: 12px;
+  height: 12px;
+}
+
+.ik-card__sticker {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 2;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--ik-red-bright);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  transform: rotate(3deg);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+}
+
+.ik-card__pick {
+  position: absolute;
+  top: 36px;
+  right: 9px;
+  z-index: 2;
+  padding: 2px 6px;
+  border: 1px solid rgba(107, 208, 255, 0.45);
+  border-radius: 4px;
+  background: rgba(107, 208, 255, 0.14);
+  color: var(--ik-blue);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.ik-card__op {
+  position: absolute;
+  right: 11px;
+  bottom: 9px;
+  left: 11px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.9);
+}
+
+.ik-card__opname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ik-card__body {
+  padding: 12px 13px 14px;
+}
+
+.ik-card__title {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.28;
+  letter-spacing: -0.005em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.ik-card__excerpt {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 7px 0 0;
+  color: var(--ik-muted);
+  font-size: 12.5px;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.ik-board--empty {
+  display: block;
+}
+
+.ik-empty {
+  max-width: 420px;
+  margin: 18vh auto 0;
+  text-align: center;
+  color: var(--ik-muted);
+}
+
+.ik-empty__mark {
+  font-family: var(--ik-font-display);
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  color: var(--ik-accent);
+}
+
+.ik-empty h2 {
+  margin: 12px 0 8px;
+  color: var(--ik-text);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.ik-empty p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+ik-app.is-compact .ik-board {
+  gap: 10px;
+}
+
+ik-app.is-compact .ik-card__body {
+  padding: 9px 10px 10px;
+}
+
+ik-app.is-compact .ik-card__excerpt {
+  display: none;
+}
+
+ik-app.is-compact .ik-card__title {
+  font-size: 14px;
+  -webkit-line-clamp: 2;
+}
+
+ik-app.is-syncing .ik-board {
+  opacity: 0.68;
+  transition: opacity 0.18s ease;
+}
+
+/* Bottom-right feed picker */
+.ik-filter {
+  position: fixed;
+  right: 26px;
+  bottom: 22px;
+  z-index: 40;
+}
+
+.ik-filter__button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  background: #f3f1ea;
+  color: #101012;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.75);
+}
+
+.ik-filter__button::-webkit-details-marker {
+  display: none;
+}
+
+.ik-filter__button svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.16s ease;
+}
+
+.ik-filter[open] .ik-filter__button svg {
+  transform: rotate(180deg);
+}
+
+.ik-filter__menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  min-width: 232px;
+  max-height: min(60vh, 420px);
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid var(--ik-line-strong);
+  border-radius: 14px;
+  background: rgba(24, 24, 27, 0.98);
+  box-shadow: var(--ik-shadow-pop);
+  backdrop-filter: blur(16px);
+}
+
+.ik-filter__menu button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ik-text-soft);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ik-filter__menu button:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+.ik-filter__menu button[aria-selected="true"] {
+  background: var(--ik-accent);
+  color: var(--ik-accent-ink);
+}
+
+.ik-filter__check {
+  font-size: 11px;
+}
+
+.ik-filter__sep {
+  height: 1px;
+  margin: 5px 4px;
+  background: var(--ik-line);
+}
+
+@media (max-width: 1180px) {
+  .ik-board {
+    padding-inline: 18px;
+  }
+}
+
+@media (max-width: 680px) {
+  .ik-main {
+    padding-top: calc(var(--ik-topbar-h) + 4px);
+  }
+
+  .ik-board {
+    padding: 0 12px 92px;
+  }
+
+  .ik-filter {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .ik-filter__button {
+    padding: 9px 13px;
+    font-size: 12px;
+  }
+}

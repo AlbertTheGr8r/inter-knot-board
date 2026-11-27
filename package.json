@@ -1,0 +1,25 @@
+{
+  "name": "inter-knot",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "An Inter-Knot-styled RSS reader. Static Web Components frontend.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource/anton": "^5.3.0",
+    "@fontsource/figtree": "^5.3.0",
+    "@ui-sdk/core": "0.1.0-beta.18",
+    "@ui-sdk/web": "0.1.0-beta.18",
+    "dompurify": "^3.5.0",
+    "idb-keyval": "^6.3.0",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.4.0"
+  }
+}
