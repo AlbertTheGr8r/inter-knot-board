@@ -568,6 +568,10 @@ export class IkApp extends IkElement {
 
   private resetPagination(): void {
     this.limit = 0;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
     void this.updateComplete.then(() => this.syncPageSize(true));
   }
 
