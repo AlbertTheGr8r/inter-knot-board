@@ -10,7 +10,7 @@ reader backend can be added without rewriting the UI.
 
 ## Status
 
-v0.1.0 is the UI demo. Components render in-world demo data from
+v0.1.1 is the UI demo. Components render in-world demo data from
 `src/data/demo.ts`. The sections, scoped filter, mindful timer, adaptive
 pagination, read-on-scroll heuristic, and History view are local-only. The feed
 pipeline described below is the v0.2.0/v0.3.0 work; it is documented here so the

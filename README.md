@@ -19,7 +19,7 @@ timer, and a post view that opens over a blurred board.
 It is a static site. There are no accounts, no backend, no analytics, and no
 tracking. Your feed list, reading state, and timer live in your browser.
 
-**Status: v0.1.0 — UI demo.** The board, post view, sections, scoped filter,
+**Status: v0.1.1 — UI demo.** The board, post view, sections, scoped filter,
 mindful timer, adaptive pagination, keyboard basics, responsive layout, and
 generated poster art work. The feed pipeline (RSS/Atom, OPML, local proxy,
 FreshRSS) is the next milestone. Until then the board uses clearly in-world demo
@@ -90,7 +90,7 @@ default and only mode that works without help; feeds that do not send
 | **Miniflux**         | Usually; may need a reverse proxy | Your instance + API token — planned v0.4.0    |
 | **Lemmy**            | Same as direct                    | Native community/user RSS — planned v0.5.0    |
 
-Only the UI demo is implemented in v0.1.0; the rows above are documented
+Only the UI demo is implemented in v0.1.1; the rows above are documented
 contracts, not shipped features. The `Sources` section is the shell that direct
 RSS fills in v0.2.0. Folder management is deliberately deferred until the
 FreshRSS phase, when imported categories need a review flow.

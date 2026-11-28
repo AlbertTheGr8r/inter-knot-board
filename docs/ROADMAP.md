@@ -16,7 +16,7 @@ Not in v0.1.0: real feed fetching. The board uses in-world demo posts.
 
 ## v0.1.1 — board sections and mindful pass
 
-Shipped after the first UI demo.
+Shipped in this repository.
 
 - Four sections: Board, Saved, Sources, History.
 - Bottom-right filter with All / Unread / Read plus source scope.
@@ -26,6 +26,9 @@ Shipped after the first UI demo.
 - Opt-in read-on-scroll with a full-card dwell.
 - Reference card composition with clock/time badge and Barlow; source identity
   stays in the filter and dialog. Proxy sheet for preferences.
+- Card wall scaled to the reference: 310px target, 5px border, square
+  bottom-right corner, avatar merged into the info strip.
+- Static, hatched, rotated Inter-Knot masthead behind the wall.
 - Red tab alerts use the game's warning triangle.
 
 ## v0.2.0 — feed core
