@@ -1,5 +1,5 @@
-import { createStore, get, set } from "idb-keyval";
 import type { Article, Feed } from "../../data/types";
+import { readStored, writeStored } from "../idb-store";
 
 export type ArticleCache = Record<string, Article[]>;
 
@@ -72,48 +72,30 @@ export function pruneCache(
   return next;
 }
 
-const store = createStore("inter-knot-board", "feeds");
-
 const FEEDS_KEY = "ik.feeds.v1";
 const ARTICLES_KEY = "ik.articles.v1";
 const READING_KEY = "ik.reading.v1";
 
-async function readKey<T>(key: string, fallback: T): Promise<T> {
-  try {
-    return (await get<T>(key, store)) ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-async function writeKey<T>(key: string, value: T): Promise<void> {
-  try {
-    await set(key, value, store);
-  } catch {
-    // Storage can be unavailable or full. The session still works.
-  }
-}
-
 export function loadFeeds(): Promise<Feed[]> {
-  return readKey<Feed[]>(FEEDS_KEY, []);
+  return readStored<Feed[]>(FEEDS_KEY, []);
 }
 
 export function saveFeeds(feeds: Feed[]): Promise<void> {
-  return writeKey(FEEDS_KEY, feeds);
+  return writeStored(FEEDS_KEY, feeds);
 }
 
 export function loadArticleCache(): Promise<ArticleCache> {
-  return readKey<ArticleCache>(ARTICLES_KEY, {});
+  return readStored<ArticleCache>(ARTICLES_KEY, {});
 }
 
 export function saveArticleCache(cache: ArticleCache): Promise<void> {
-  return writeKey(ARTICLES_KEY, cache);
+  return writeStored(ARTICLES_KEY, cache);
 }
 
 export function loadReadingState(): Promise<ReadingState> {
-  return readKey<ReadingState>(READING_KEY, emptyReadingState());
+  return readStored<ReadingState>(READING_KEY, emptyReadingState());
 }
 
 export function saveReadingState(state: ReadingState): Promise<void> {
-  return writeKey(READING_KEY, state);
+  return writeStored(READING_KEY, state);
 }

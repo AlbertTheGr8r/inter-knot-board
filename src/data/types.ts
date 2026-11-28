@@ -86,3 +86,15 @@ export interface Feed {
   lastCheckedAt?: string;
   lastError?: FeedError;
 }
+
+export interface JournalEntry {
+  id: string;
+  articleId: string;
+  body: string;
+  createdAt: string;
+  /** Snapshots keep the journal readable after the article cache prunes. */
+  articleTitle: string;
+  feedTitle: string;
+  articleLink?: string;
+  articlePublishedAt: string;
+}
