@@ -196,11 +196,11 @@ export class IkBoard extends IkElement {
 
   private estimate(article: Article, cardWidth: number): number {
     const mediaHeight = cardWidth / Math.max(0.6, article.aspect);
-    const infoHeight = cardWidth * 0.12;
-    const titleLines = Math.min(4, Math.ceil(article.title.length / 27));
-    const titleHeight = titleLines * cardWidth * 0.09;
-    const excerptHeight = cardWidth * 0.081;
-    const bodyPadding = cardWidth * 0.07;
+    const infoHeight = cardWidth * 0.11;
+    const titleLines = Math.min(4, Math.ceil(article.title.length / 28));
+    const titleHeight = titleLines * cardWidth * 0.086;
+    const excerptHeight = cardWidth * 0.068;
+    const bodyPadding = cardWidth * 0.064;
     return mediaHeight + infoHeight + titleHeight + excerptHeight + bodyPadding;
   }
 

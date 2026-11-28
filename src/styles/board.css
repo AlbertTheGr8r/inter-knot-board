@@ -16,7 +16,8 @@ ui-tabs-panel[hidden] {
 }
 
 .ik-board {
-  --ik-gap: clamp(24px, 2.33vw, 56px);
+  --ik-gap: clamp(28px, 2vw, 40px);
+  --ik-row-gap: clamp(18px, 1.4vw, 28px);
   display: flex;
   align-items: flex-start;
   gap: var(--ik-gap);
@@ -33,7 +34,7 @@ ui-tabs-panel[value="saved"] .ik-board {
   display: flex;
   flex: 1 1 0;
   flex-direction: column;
-  gap: var(--ik-gap);
+  gap: var(--ik-row-gap);
   min-width: 0;
 }
 
@@ -42,9 +43,9 @@ ui-tabs-panel[value="saved"] .ik-board {
   overflow: hidden;
   container-type: inline-size;
   border: 5px solid #000;
-  border-radius: clamp(20px, 2.2vw, 32px) clamp(20px, 2.2vw, 32px) 0
-    clamp(20px, 2.2vw, 32px);
-  background: #222;
+  border-radius: clamp(14px, 1.1vw, 20px) clamp(14px, 1.1vw, 20px) 0
+    clamp(14px, 1.1vw, 20px);
+  background: #222222;
   cursor: pointer;
   transition: border-color 0.18s ease;
 }
@@ -107,7 +108,7 @@ ui-tabs-panel[value="saved"] .ik-board {
 
 .ik-card__info {
   position: relative;
-  background: #222;
+  background: #222222;
 }
 
 .ik-avatar--card {
@@ -115,19 +116,20 @@ ui-tabs-panel[value="saved"] .ik-board {
   bottom: 0;
   left: 4.2cqw;
   z-index: 3;
-  width: 23.5cqw;
-  height: 23.5cqw;
-  border: 0.55cqw solid #222;
-  font-size: 7.5cqw;
+  width: 22.5cqw;
+  height: 22.5cqw;
+  border: 5px solid #222222;
+  box-shadow: none;
+  font-size: 7.2cqw;
 }
 
 .ik-card__author {
   display: block;
-  margin: 0 4.2cqw 0 calc(4.2cqw + 23.5cqw + 2.9cqw);
-  padding: 1.2cqw 0 2.4cqw;
+  margin: 0 4.2cqw 0 calc(4.2cqw + 22.5cqw + 2.9cqw);
+  padding: 1.1cqw 0 2.2cqw;
   overflow: hidden;
   color: #636363;
-  font-size: 7.05cqw;
+  font-size: 6cqw;
   font-style: italic;
   font-weight: 800;
   line-height: 1.08;
@@ -141,7 +143,7 @@ ui-tabs-panel[value="saved"] .ik-board {
   position: absolute;
   right: 4.2cqw;
   bottom: 0;
-  left: calc(4.2cqw + 23.5cqw + 2.9cqw);
+  left: calc(4.2cqw + 22.5cqw + 2.9cqw);
   height: 0.5cqw;
   background: #353535;
 }
@@ -149,14 +151,14 @@ ui-tabs-panel[value="saved"] .ik-board {
 .ik-card__body {
   position: relative;
   z-index: 2;
-  padding: 2.6cqw 4.2cqw 4.4cqw 7.7cqw;
-  background: #222;
+  padding: 2.4cqw 4.2cqw 4cqw 5.7cqw;
+  background: #222222;
 }
 
 .ik-card__title {
   margin: 0;
   color: #9a9a9a;
-  font-size: 7.42cqw;
+  font-size: 7.1cqw;
   font-style: italic;
   font-weight: 800;
   line-height: 1.21;
@@ -179,7 +181,7 @@ ui-tabs-panel[value="saved"] .ik-board {
   overflow: hidden;
   margin: 1.05cqw 0 0;
   color: #b3b3b1;
-  font-size: 6.7cqw;
+  font-size: 5.6cqw;
   font-style: italic;
   font-weight: 800;
   line-height: 1.2;
@@ -285,6 +287,10 @@ ui-tabs-panel[value="saved"] .ik-board {
 
 ik-app.is-compact .ik-board {
   gap: 10px;
+}
+
+ik-app.is-compact .ik-board__col {
+  gap: 12px;
 }
 
 ik-app.is-compact .ik-card__body {
