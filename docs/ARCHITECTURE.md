@@ -160,9 +160,9 @@ request.
 - **Masonry.** CSS columns are avoided because they break reading order. The
   board is a flex row of flex columns. The first two bands are seeded in feed
   order, then the rest of the cards balance toward the shortest column.
-- **Columns.** The board targets a 380px card, caps a column at 400px, and
-  allows up to eight columns on very wide displays. `columnCountForWidth()`
-  keeps the layout and pagination in sync.
+- **Columns.** The board targets a 310px card, caps a column at 370px, keeps
+  cards above 285px, and allows up to eight columns on very wide displays.
+  `columnCountForWidth()` keeps the layout and pagination in sync.
 - **Pagination.** The board measures its column count, viewport, and rendered
   card heights, then asks `computeBatchSize()` for roughly five screens of cards.
   The app keeps a `limit`; there is no scroll-triggered auto-load.
