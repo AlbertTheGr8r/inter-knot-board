@@ -78,6 +78,7 @@ const STOP_WORDS = new Set([
   "to",
   "in",
   "on",
+  "for",
   "and",
   "is",
   "are",
