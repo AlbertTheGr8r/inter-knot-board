@@ -1,5 +1,5 @@
 import { html, nothing, type TemplateResult } from "lit";
-import type { Article, Feed } from "../data/types";
+import type { Article, Feed, JournalEntry } from "../data/types";
 import { filterArticles, type Scope } from "../lib/article-filter";
 import {
   FeedError,
@@ -37,6 +37,14 @@ import {
   normalizeFeedUrl,
 } from "../lib/feed/url";
 import {
+  JOURNAL_MAX_LENGTH,
+  addJournalEntry,
+  journalArticleIds,
+  loadJournal,
+  removeJournalEntry,
+  saveJournal,
+} from "../lib/journal-store";
+import {
   MINDFUL_IDLE_MS,
   MINDFUL_TICK_MS,
   createMindfulState,
@@ -56,6 +64,7 @@ import {
   saveReadOnScroll,
 } from "../lib/preferences";
 import { IkElement } from "../ui/base";
+import { infoIcon } from "../ui/icons";
 import "./ik-board";
 import "./ik-history";
 import "./ik-post-dialog";
@@ -86,12 +95,15 @@ const SCOPE_OPTIONS: ScopeOption[] = [
   { value: "all", label: "All" },
   { value: "unread", label: "Unread" },
   { value: "read", label: "Read" },
+  { value: "journal", label: "Journal" },
 ];
 
 export class IkApp extends IkElement {
   static properties = {
     feeds: { state: true },
     articles: { state: true },
+    journalEntries: { state: true },
+    journalInfoOpen: { state: true },
     loading: { state: true },
     busyIds: { state: true },
     importing: { state: true },
@@ -110,6 +122,8 @@ export class IkApp extends IkElement {
 
   feeds: Feed[] = [];
   articles: Article[] = [];
+  journalEntries: JournalEntry[] = [];
+  journalInfoOpen = false;
   loading = true;
   busyIds: string[] = [];
   importing = false;
@@ -129,6 +143,7 @@ export class IkApp extends IkElement {
   private reading: ReadingState = emptyReadingState();
   private persistChain: Promise<void> = Promise.resolve();
   private readingChain: Promise<void> = Promise.resolve();
+  private journalChain: Promise<void> = Promise.resolve();
   private statusToken = 0;
   private timerId = 0;
   private lastInteraction = Date.now();
@@ -226,8 +241,11 @@ export class IkApp extends IkElement {
         ${this.showFilter && !this.loading ? this.renderFilter() : nothing}
 
         <ik-post-dialog
+          .journalEntries=${this.journalEntries}
           @ik-post-closed=${this.onPostClosed}
           @ik-toggle-save=${this.onToggleSave}
+          @ik-journal-add=${this.onJournalAdd}
+          @ik-journal-delete=${this.onJournalDelete}
         ></ik-post-dialog>
 
         <ik-proxy
@@ -263,6 +281,28 @@ export class IkApp extends IkElement {
     }
 
     if (this.pagedVisible.length === 0) {
+      if (this.scope === "journal" && this.journalEntries.length === 0) {
+        return html`
+          <div class="ik-board ik-board--empty">
+            <div class="ik-empty">
+              <span class="ik-empty__mark">[ JOURNAL ]</span>
+              <h2>No field notes yet</h2>
+              <p>
+                Open a post and choose <strong>Write to Journal</strong>. Your
+                private field log stays on this device.
+              </p>
+              <button
+                class="ik-empty__button"
+                type="button"
+                @click=${this.clearFilters}
+              >
+                Back to the board
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
       return html`
         <div class="ik-board ik-board--empty">
           <div class="ik-empty">
@@ -376,6 +416,29 @@ export class IkApp extends IkElement {
                 </button>
               `,
             )}
+
+            <div class="ik-filter__journal">
+              <button
+                class="ik-filter__info"
+                type="button"
+                aria-expanded=${this.journalInfoOpen ? "true" : "false"}
+                aria-controls="ik-journal-info"
+                @click=${this.toggleJournalInfo}
+              >
+                ${infoIcon}
+                <span>About Journal</span>
+              </button>
+              ${
+                this.journalInfoOpen
+                  ? html`
+                      <p class="ik-filter__journal-note" id="ik-journal-info">
+                        Private field log. Entries stay on this device and are
+                        never posted. A dedicated Journal tab is being designed.
+                      </p>
+                    `
+                  : nothing
+              }
+            </div>
           </div>
 
           <div
@@ -478,8 +541,17 @@ export class IkApp extends IkElement {
     return this.articles;
   }
 
+  private get journalIds(): ReadonlySet<string> {
+    return journalArticleIds(this.journalEntries);
+  }
+
   private get visible(): Article[] {
-    return filterArticles(this.articles, this.scope, this.sourceFilter);
+    return filterArticles(
+      this.articles,
+      this.scope,
+      this.sourceFilter,
+      this.journalIds,
+    );
   }
 
   private get pagedVisible(): Article[] {
@@ -495,6 +567,7 @@ export class IkApp extends IkElement {
       this.articles.filter((article) => article.starred),
       this.scope,
       this.sourceFilter,
+      this.journalIds,
     );
   }
 
@@ -582,15 +655,17 @@ export class IkApp extends IkElement {
   }
 
   private async bootstrap(): Promise<void> {
-    const [feeds, cache, reading] = await Promise.all([
+    const [feeds, cache, reading, journal] = await Promise.all([
       loadFeeds(),
       loadArticleCache(),
       loadReadingState(),
+      loadJournal(),
     ]);
 
     this.feeds = feeds;
     this.cache = cache;
     this.reading = reading;
+    this.journalEntries = journal;
     this.openedAt = new Map(Object.entries(reading.openedAt));
     this.articles = applyReadingState(flattenCache(cache), reading);
     this.loading = false;
@@ -1076,6 +1151,45 @@ export class IkApp extends IkElement {
     this.sourceFilter = null;
     this.closeFilter();
     this.resetPagination();
+  }
+
+  private toggleJournalInfo = (): void => {
+    this.journalInfoOpen = !this.journalInfoOpen;
+  };
+
+  private onJournalAdd = (
+    event: CustomEvent<{ articleId: string; body: string }>,
+  ): void => {
+    const article = this.articles.find(
+      (item) => item.id === event.detail.articleId,
+    );
+    if (!article) return;
+
+    const next = addJournalEntry(this.journalEntries, {
+      articleId: article.id,
+      body: event.detail.body.slice(0, JOURNAL_MAX_LENGTH),
+      articleTitle: article.title,
+      feedTitle: article.feedTitle,
+      articleLink: article.link,
+      articlePublishedAt: article.publishedAt,
+    });
+    if (next === this.journalEntries) return;
+
+    this.journalEntries = next;
+    this.persistJournal(next);
+  };
+
+  private onJournalDelete = (event: CustomEvent<string>): void => {
+    const next = removeJournalEntry(this.journalEntries, event.detail);
+    if (next === this.journalEntries) return;
+    this.journalEntries = next;
+    this.persistJournal(next);
+  };
+
+  private persistJournal(entries: JournalEntry[]): void {
+    this.journalChain = this.journalChain
+      .then(() => saveJournal(entries))
+      .catch(() => undefined);
   }
 
   private loadMore = (): void => {

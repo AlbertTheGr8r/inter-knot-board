@@ -551,3 +551,32 @@ ik-app.is-syncing .ik-board {
   border-color: var(--ik-accent);
   background: rgba(241, 216, 10, 0.12);
 }
+
+.ik-filter__journal {
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--ik-line);
+}
+
+.ik-filter__info {
+  color: var(--ik-dim) !important;
+  font-size: 10.5px !important;
+  letter-spacing: 0.04em;
+}
+
+.ik-filter__info svg {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+}
+
+.ik-filter__info[aria-expanded="true"] {
+  color: var(--ik-accent) !important;
+}
+
+.ik-filter__journal-note {
+  margin: 0 10px 5px;
+  color: var(--ik-muted);
+  font-size: 10.5px;
+  line-height: 1.5;
+}

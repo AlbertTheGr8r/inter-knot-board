@@ -28,6 +28,14 @@ describe("matchesScope", () => {
       1,
     );
   });
+
+  it("matches only articles with journal entries", () => {
+    const journalIds = new Set(["a", "c"]);
+    expect(
+      articles.filter((item) => matchesScope(item, "journal", journalIds)),
+    ).toHaveLength(2);
+    expect(matchesScope(articles[1]!, "journal", journalIds)).toBe(false);
+  });
 });
 
 describe("filterArticles", () => {
@@ -39,5 +47,14 @@ describe("filterArticles", () => {
 
   it("clears the source with null", () => {
     expect(filterArticles(articles, "all", null)).toHaveLength(3);
+  });
+
+  it("combines the journal scope with a source", () => {
+    const journalIds = new Set(["a", "c"]);
+    expect(
+      filterArticles(articles, "journal", "one", journalIds).map(
+        (item) => item.id,
+      ),
+    ).toEqual(["a"]);
   });
 });
