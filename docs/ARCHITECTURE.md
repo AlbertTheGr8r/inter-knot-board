@@ -24,7 +24,7 @@ UI is built against the right seams.
 | Components | Lit 3, light DOM                     | Small reactive layer; global CSS and design tokens apply without shadow-boundary work. |
 | Behaviors  | `@ui-sdk/web`                        | Unstyled Dialog/Tabs with focus management and ARIA. We own every pixel.               |
 | Styling    | Handwritten CSS + tokens             | The UI is bespoke; utility classes would fight the chrome and poster art.              |
-| Fonts      | Anton + Figtree via Fontsource       | Self-hosted lookalikes; the game's fonts are proprietary and not shipped.              |
+| Fonts      | Anton + Barlow via Fontsource        | Self-hosted lookalikes; the game's fonts are proprietary and not shipped.              |
 | Security   | DOMPurify (planned), CSP meta        | Feed HTML is untrusted.                                                                |
 | Storage    | `localStorage` + IndexedDB (planned) | Feed metadata/settings are small; articles need a larger cache.                        |
 

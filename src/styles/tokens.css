@@ -30,7 +30,7 @@
   --ik-topbar-h: 84px;
 
   --ik-font-display: "Anton", "Arial Narrow", sans-serif;
-  --ik-font-ui: "Figtree", "Inter", system-ui, -apple-system, sans-serif;
+  --ik-font-ui: "Barlow", "Inter", system-ui, -apple-system, sans-serif;
 
   --ik-shadow-card:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
