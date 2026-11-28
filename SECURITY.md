@@ -49,8 +49,9 @@ and protecting a user from a compromised browser or extension.
 ## Security decisions in this repository
 
 - No analytics, telemetry, or third-party scripts.
-- Reading state, the mindful timer, open history, and preferences are local to
-  the browser. They are not transmitted.
+- Reading state, the mindful timer, open history, private journal notes, and
+  preferences are local to the browser. They are not transmitted. Journal notes
+  are never posted to a feed, Lemmy, or any other service.
 - No public CORS proxy is shipped or recommended.
 - Direct feed fetching is credential-free (`credentials: "omit"`). It is
   limited to HTTPS on HTTPS pages, with a 10-second timeout, a 5 MB cap, and a

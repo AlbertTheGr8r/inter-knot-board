@@ -1,7 +1,7 @@
 {
   "name": "inter-knot-board",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "A static, board-style RSS reader inspired by Inter-Knot. Direct feeds, no accounts.",
   "license": "MIT",

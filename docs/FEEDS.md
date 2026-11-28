@@ -72,7 +72,7 @@ of sources, and YouTube's Atom feed is not among them.
    that, refresh is manual.
 
 Add-feed discovery from an HTML page (`<link rel="alternate">`) is deferred to
-v0.2.1. A URL that returns HTML is stored as a failed feed so the user can see
+v0.2.2. A URL that returns HTML is stored as a failed feed so the user can see
 what happened and remove it.
 
 ## Local proxy contract (planned, v0.3.0)

@@ -48,8 +48,21 @@ Shipped in this repository.
 - Unread counts and the source scope now come from real feeds, including feeds
   that failed to load.
 
-Deferred to v0.2.1:
+## v0.2.1 — post reader
 
+Shipped in this repository.
+
+- Two-column post reader for posts without comments or journal notes.
+- Three-column reader with a third rail when comments or notes exist.
+- Private per-post Journal notes stored locally, with add and delete.
+- `Journal` filter plus an info point for the dedicated Journal tab in design.
+- Scrollable long post images with sharp fades and up/down arrows.
+- Restyled post window, backdrop, header, image card, content card, and rail.
+- Comments rail ready for read-only comment sources such as Lemmy.
+
+## v0.2.2 — daily-use polish
+
+- Dedicated Journal section in the top navigation.
 - Add-feed discovery from an HTML page (`<link rel="alternate">`).
 - OPML export.
 - Search across titles and article text.

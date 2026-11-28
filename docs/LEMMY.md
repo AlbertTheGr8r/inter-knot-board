@@ -34,11 +34,14 @@ feed. The app can offer a small helper that builds the URL from
 ## Scope for the first version
 
 - **Read-only.** No login, voting, commenting, subscribing, or moderation.
+- **No write actions.** Posting or commenting is out of scope. The post reader
+  keeps room for a future action, but it needs a separate auth and security
+  design before it can exist.
 - **Public feeds only.** Do not ask for a JWT or store one. The
   `front`/`inbox`/`modlog` feeds are out of scope.
 - **No invented comments.** A community RSS feed contains posts, not the comment
   tree. The post dialog shows the post body and a link to the original thread;
-  the comment area stays empty or shows a "Read the thread on Lemmy" action.
+  the comments rail stays empty until a read-only comment source fills it.
 - **Respect the instance.** Rate-limit refresh, identify the client, and do not
   hammer small instances. Cache articles locally like any other feed.
 - **NSFW and instance rules.** The reader does not add a content filter in v1.
@@ -68,8 +71,8 @@ GET /api/v3/comment/list?post_id={id}&sort=Top&limit=50
 ```
 
 Those are read-only and do not require authentication on most instances. The
-existing post dialog already renders a comment list with floor badges, so the
-mapping is mostly:
+post dialog already has a comments rail with floor badges, so the mapping is
+mostly:
 
 - Lemmy comment `content` → sanitized comment body.
 - `creator.name` / `creator.avatar` → author row.

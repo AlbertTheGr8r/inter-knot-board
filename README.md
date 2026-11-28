@@ -22,10 +22,16 @@ timer, and a post view that opens over a blurred board.
 It is a static site. There are no accounts, no backend, no analytics, and no
 tracking. Your feed list, reading state, and timer live in your browser.
 
-**Status: v0.2.0 — direct feeds.** Add a feed URL or import a FreshRSS/OPML
+**Status: v0.2.1 — post reader.** Add a feed URL or import a FreshRSS/OPML
 export. The board parses RSS 2.0, Atom, RDF, and JSON Feed in the browser,
-caches posts in IndexedDB, and feeds the existing sections, filters, mindful
-timer, and poster fallback.
+caches posts in IndexedDB, and feeds the sections, filters, mindful timer, and
+poster fallback.
+
+The post view now has a two-column reading layout by default and a three-column
+layout when comments or private journal notes are present. Long informational
+images scroll inside their card instead of being cropped, and the Journal filter
+collects posts with private field notes. The dedicated Journal tab is still in
+design.
 
 Direct fetch is the only transport in this release. A static site cannot bypass
 CORS, so feeds that do not send `Access-Control-Allow-Origin` will show a clear
@@ -64,17 +70,25 @@ it stays a queue.
   posters.
 - **Sanitized article HTML.** Scripts, event handlers, forms, iframes, and
   unsafe URLs are stripped. Links open the original source in a new tab.
+- **Two- and three-column post reader.** Image card plus article by default;
+  a third rail for comments or private notes when one exists.
+- **Private Journal.** Write local field notes on a post, read them in the
+  Journal rail, filter the board by Journal, and delete notes. Nothing is
+  posted or synced; the dedicated Journal tab is still in design.
+- **Scrollable post images.** Long strips keep their full width and scroll with
+  sharp fades and up/down arrows. Short images fill the card as before.
 - Order-preserving masonry: 1 → 2 → 3 → 4 → 5 → 8 columns, depending on width.
 - Static procedural Inter-Knot masthead behind the wall, hatched and rotated
   without a marquee or game texture.
 - Post cards with a clock/time badge, read-state title color, author strip, tag,
   title, and a one-line preview.
-- Post dialog: blurred backdrop, source bar, save toggle, red close button,
-  media pane, scrollable sanitized article, `Expand`, tags, and original link.
+- Post dialog: blurred hatched backdrop, three-corner window, two-border avatar,
+  image card, article card, comments/Journal rail, save toggle, and original
+  link.
 - Board / Saved / Sources / History sections. Opening a post marks it read and
   files it in History.
-- Bottom-right filter: All / Unread / Read plus source scope, with the scope
-  controls pinned nearest the pill.
+- Bottom-right filter: All / Unread / Read / Journal plus source scope, with
+  the scope controls pinned nearest the pill.
 - Mindful timer and Proxy sheet: cap choices, Unlimited, refill, compact density,
   read-on-scroll.
 - Adaptive `Load more`: about five board viewports per batch, never an infinite
@@ -85,7 +99,9 @@ it stays a queue.
 
 ![The Sources manager with two direct feeds](docs/screenshots/sources.webp)
 
-![The post view](docs/screenshots/post.webp)
+![The two-column post view](docs/screenshots/post.webp)
+
+![The three-column post view with a private Journal rail](docs/screenshots/journal.webp)
 
 ## Quick start
 

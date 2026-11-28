@@ -10,12 +10,16 @@ reader backend can be added without rewriting the UI.
 
 ## Status
 
-v0.2.0 ships the direct feed core. `ik-app` loads feeds and cached articles from
-IndexedDB, refreshes stale feeds with the browser transport, and feeds the same
-sections, scoped filter, mindful timer, and pagination that the UI demo used.
-The board starts empty; there is no demo dataset. The local proxy and reader
-backends remain v0.3.0/v0.4.0 work, and the transport seam is kept so they can
-land without rewriting the parser or UI.
+v0.2.1 ships the direct feed core and the new post reader. `ik-app` loads feeds,
+cached articles, and private journal notes from IndexedDB, refreshes stale feeds
+with the browser transport, and feeds the sections, Journal filter, mindful
+timer, and pagination. The board starts empty; there is no demo dataset.
+
+The post dialog chooses two columns by default and a three-column layout when
+comments or journal notes exist. Comments are not populated by RSS yet; the rail
+is ready for read-only comment sources. The local proxy and reader backends
+remain v0.3.0/v0.4.0 work, and the transport seam is kept so they can land
+without rewriting the parser or UI.
 
 ## Stack
 
@@ -37,12 +41,12 @@ can be replaced without touching the design layer.
 
 | Element            | Responsibility                                                                       |
 | ------------------ | ------------------------------------------------------------------------------------ |
-| `<ik-app>`         | Owns feeds, cache, refresh, articles, section, filters, read/saved state, timer.     |
+| `<ik-app>`         | Owns feeds, cache, refresh, articles, journal, filters, read/saved state, timer.     |
 | `<ik-topbar>`      | Refresh control, mindful cap chip, `Board`/`Saved`/`Sources`/`History`.              |
 | `<ik-board>`       | Masonry layout, adaptive batch size, optional read-on-scroll observer.               |
 | `<ik-card>`        | One post: lead image or poster, clock/time badge, author strip, tag, title, preview. |
 | `<ik-poster>`      | Deterministic SVG/CSS poster for posts without a usable photo.                       |
-| `<ik-post-dialog>` | Post reader over the blurred board; media, sanitized HTML, save, original link.      |
+| `<ik-post-dialog>` | Two/three-column reader; scrollable media, comments/journal rail, private notes.     |
 | `<ik-sources>`     | Add feed, OPML import, per-feed status, retry/remove, source scope.                  |
 | `<ik-history>`     | Posts actually opened, not cards merely seen on the board.                           |
 | `<ik-proxy>`       | Profile, mindful cap, appearance, read-on-scroll, transport notes.                   |
@@ -58,10 +62,14 @@ when shown.
 ## Sections and filters
 
 The four top-level sections are **Board**, **Saved**, **Sources**, and
-**History**. The bottom-right filter owns the view state: `All`, `Unread`, or
-`Read`, plus an optional source scope. It does not duplicate the sections. The
-popover opens upward; the scope group is pinned at the bottom so it stays near
-the pointer when the source list is long.
+**History**. The bottom-right filter owns the view state: `All`, `Unread`,
+`Read`, or `Journal`, plus an optional source scope. `Journal` is not a read
+state; it shows posts with at least one private field note. The popover opens
+upward; the scope group is pinned at the bottom so it stays near the pointer
+when the source list is long.
+
+The Journal controls include an info point explaining that entries are stored
+only on this device and that the dedicated Journal section is still in design.
 
 Opening a post marks it read and adds an entry to History. Read-on-scroll, when
 enabled, marks a card read after the whole card has been visible for 1.5 seconds;
@@ -78,7 +86,7 @@ cap. Changing the cap starts a fresh session. `Unlimited` is explicit and is
 never the default. State is stored in `localStorage`; no network request is
 involved.
 
-## Data flow (v0.2.0)
+## Data flow (v0.2.1)
 
 ```
 feed URL / OPML file
@@ -94,8 +102,10 @@ transport (direct, CORS-only) ──► parser (RSS 2.0 / Atom / RDF / JSON Feed
 IndexedDB cache ◄────────────── ik-app ──► filtered, limited articles
    │                             │
    ├── feed metadata             ├──► ik-board ──► ik-card ──► image | poster
-   ├── cached articles           ├──► ik-post-dialog ──► read / history / save
-   └── read/starred/opened       ├──► ik-history ──► openedAt entries
+   ├── cached articles           ├──► ik-post-dialog ──► 2/3 columns
+   ├── read/starred/opened       │      ├──► sanitized article + media scroll
+   └── journal notes             │      └──► comments / private journal rail
+                                 ├──► ik-history ──► openedAt entries
                                  ├──► ik-sources ──► add / import / refresh
                                  └──► ik-proxy ──► mindful timer / preferences
 ```
@@ -134,9 +144,11 @@ parser and normalizer do not change.
   opened posts are retained beyond the cap.
 - IndexedDB key `ik.reading.v1`: read IDs, starred IDs, and opened timestamps.
   Keeping this separate means a cache prune cannot erase reading state.
+- IndexedDB key `ik.journal.v1`: private journal entries with article snapshots.
+  The snapshot keeps a note readable if the article later leaves the cache.
 - Secrets: API passwords/tokens belong in `sessionStorage` by default. Persisting
   them is an explicit opt-in with a warning; they are never written into URLs or
-  logs. v0.2.0 has no credentials to store.
+  logs. v0.2.1 has no credentials to store.
 
 ## Rendering notes
 
@@ -168,12 +180,28 @@ parser and normalizer do not change.
   `rel="noopener noreferrer nofollow"`; relative image and link URLs are resolved
   against the post. The dialog renders that sanitized string and keeps the
   plain-text paragraph fallback for feeds that only provide text.
+- **Post layouts.** `postLayout()` returns two columns when a post has neither
+  comments nor journal notes, and three when a third rail exists. The two-column
+  layout uses independent image and content cards. The three-column layout
+  nests the image card and content inside a black post card, with a separate
+  comments/Journal rail.
+- **Post media.** The image pane is a scroll viewport. Short images fill it with
+  `object-fit: cover`; long strips keep their natural height and scroll. Scroll
+  state drives sharp top/bottom fades and conditional up/down arrows. The image
+  resets to the top whenever the dialog opens.
+- **Journal.** Journal notes are private local records. The post rail shows them
+  oldest first, with add and delete. The Journal filter maps entries back to
+  article IDs; the article cache is not required to keep a note's snapshot.
 - **Dialogs.** `@ui-sdk/web/dialog` provides the top layer, focus trap and
   `openchange` lifecycle. CSS animates `data-starting-style` /
   `data-ending-style`.
-- **Backdrop.** A fixed, static SVG masthead: three staggered lines filled with
-  a dark hatch and rotated `-20deg`. Barlow Condensed carries the display type.
-  There is no marquee and no game texture; it is original, generated markup.
+- **Backdrop.** The app background is a fixed, static SVG masthead: three
+  staggered lines filled with a dark hatch and rotated `-20deg`. The post
+  backdrop adds a slight blur, a fine gray/black hatch, and a bottom vignette.
+  The post window itself is a `#232322` to black gradient.
+- **Window.** The post window has three rounded corners with a square top-right,
+  a translucent #323232 outer border, a solid black inner border, and separate
+  image, content, and rail surfaces.
 
 ## Testing
 
@@ -183,6 +211,8 @@ parser and normalizer do not change.
 - The feed suite uses jsdom fixtures for RSS 2.0, Atom, YouTube Atom, RDF, JSON
   Feed, malformed XML, entity declarations, OPML nesting/dedupe, relative URLs,
   HTML sanitization, transport error classes, and cache/read-state preservation.
+- Post tests cover the two/three-column decision, media scroll edges, and the
+  private journal add/remove/grouping helpers.
 - The local proxy suite is still planned for v0.3.0 and will cover URL validation
   and private-IP blocking.
 - CI runs `bun run check` (type-check, tests, production build) on every push and
