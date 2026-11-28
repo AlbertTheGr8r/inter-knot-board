@@ -14,15 +14,18 @@ describe the visual inspiration for an original interface study.
   the `reference/` folder is gitignored.
 - The Inter-Knot-inspired globe mark, card posters, textures, and UI chrome are
   original CSS/SVG recreations.
-- The bundled fonts (Anton, Figtree) are licensed under the SIL Open Font
-  License 1.1; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- The bundled fonts (Anton, Barlow, and Barlow Condensed) are licensed under
+  the SIL Open Font License 1.1; see
+  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Scope
 
 This is not a service, a hosted product, or a replacement for a feed
-aggregator. There are no accounts, payments, analytics, or tracking. The public
-demo is static; personal feed fetching is configured by the user, in their own
-browser, against their own proxy or reader backend.
+aggregator. There are no accounts, payments, analytics, or tracking. Feed
+content belongs to its publishers: the reader only displays what a feed
+provides, hotlinks its images, and links back to the original post. The public
+site is static; direct fetching happens in the visitor's browser, and a local
+proxy or reader backend is opt-in.
 
 ## License
 

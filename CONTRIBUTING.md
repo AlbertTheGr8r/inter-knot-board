@@ -87,7 +87,7 @@ for a smaller change or a test before merging.
 - Reference screenshots used for design study stay out of the repository. The
   `reference/` folder is gitignored.
 - Our own screenshots live in `docs/screenshots/`.
-- Fonts are OFL-licensed (Anton, Figtree) and self-hosted.
+- Fonts are OFL-licensed (Anton, Barlow, Barlow Condensed) and self-hosted.
 
 ## Review
 

@@ -50,15 +50,20 @@ script-src 'self';
 style-src 'self' 'unsafe-inline';
 img-src 'self' data: https:;
 font-src 'self';
-connect-src 'self';
+connect-src 'self' https:;
 object-src 'none';
 base-uri 'none';
 form-action 'none';
 ```
 
+Why `connect-src 'self' https:`: direct feeds live on arbitrary HTTPS origins,
+so the browser must be allowed to fetch them. Feed HTML is sanitized separately;
+the CSP is not the sanitizer. The v0.3.0 local proxy will add its loopback origin
+to this list.
+
 Why `style-src 'unsafe-inline'`: the poster and card components set CSS custom
 properties through `style` attributes. Tightening this requires moving those
-values into classes or a stylesheet, which is planned but not done in v0.1.0.
+values into classes or a stylesheet, which is still planned.
 
 Important limitations:
 
@@ -76,8 +81,9 @@ browser console for violations.
 
 ## Daily use from Pages
 
-The public site is the UI. The local proxy is planned for v0.3.0; once it
-exists, it runs on the same machine:
+The public site is the UI and, in v0.2.0, fetches CORS-enabled feeds directly in
+the browser. The local proxy is planned for v0.3.0; once it exists, it runs on
+the same machine:
 
 ```bash
 # After v0.3.0:

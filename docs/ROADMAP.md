@@ -33,16 +33,28 @@ Shipped in this repository.
 
 ## v0.2.0 — feed core
 
-- RSS 2.0, Atom, RDF, and JSON Feed parsing.
-- Direct transport with time/size limits and useful error classes.
-- Feed manager: add, remove, refresh, error state. The Sources section becomes
-  the real manager.
+Shipped in this repository.
+
+- RSS 2.0, Atom, RDF, and JSON Feed parsing, including YouTube `media:` data.
+- Direct transport with time/size limits and classified errors.
+- Sources manager: add, remove, per-feed refresh, refresh all, retry failed,
+  remove failed, and exact error state.
+- OPML import with folder flattening, URL normalization, deduplication, and an
+  imported/skipped/failed summary.
+- IndexedDB feed and article cache; separate read/starred/opened state.
+- Stable article IDs so reading state survives refreshes and cache pruning.
+- Real feed images with generated-poster fallback; sanitized article HTML.
+- Empty first-run board; demo content removed.
+- Unread counts and the source scope now come from real feeds, including feeds
+  that failed to load.
+
+Deferred to v0.2.1:
+
 - Add-feed discovery from an HTML page (`<link rel="alternate">`).
-- IndexedDB article cache; read/starred state; unread counts.
-- OPML import/export.
+- OPML export.
 - Search across titles and article text.
 - Keyboard navigation: `J`/`K`, `Enter`, `S`, `U`, `/`, `Esc`.
-- Mark all read, per-feed refresh, refresh on open.
+- Mark all read and refresh on open.
 
 ## v0.3.0 — local proxy
 

@@ -1,9 +1,9 @@
 {
   "name": "inter-knot-board",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
-  "description": "A static, board-style RSS reader inspired by Inter-Knot. Tech demo, not a service.",
+  "description": "A static, board-style RSS reader inspired by Inter-Knot. Direct feeds, no accounts.",
   "license": "MIT",
   "packageManager": "bun@1.4.4",
   "homepage": "https://albertthegr8r.github.io/inter-knot-board/",

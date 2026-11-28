@@ -26,8 +26,10 @@ Inter-Knot Board is a static client. The realistic threats are:
 
 1. **Untrusted feed HTML and URLs.** A feed can contain scripts, iframes, event
    handlers, tracking pixels, or hostile links. All article HTML is sanitized
-   before it reaches the DOM. Links open with `noopener noreferrer`, and remote
-   images use a no-referrer policy where possible.
+   with DOMPurify before it is stored or rendered. Scripts, styles, forms,
+   iframes, event attributes, and unsafe URL schemes are removed. Links open
+   with `noopener noreferrer nofollow`, and remote images use a no-referrer
+   policy.
 2. **A malicious or compromised local proxy.** The proxy sees feed URLs and
    content. It must bind to loopback, require a token, enforce an origin
    allowlist, and block SSRF targets. It is not a hosted service.
@@ -50,8 +52,13 @@ and protecting a user from a compromised browser or extension.
 - Reading state, the mindful timer, open history, and preferences are local to
   the browser. They are not transmitted.
 - No public CORS proxy is shipped or recommended.
-- Direct feed fetching is credential-free (`credentials: "omit"`).
+- Direct feed fetching is credential-free (`credentials: "omit"`). It is
+  limited to HTTPS on HTTPS pages, with a 10-second timeout, a 5 MB cap, and a
+  content-type check.
+- XML entity declarations are rejected before parsing.
 - The production CSP is injected at build time (see `vite.config.ts`).
+  `connect-src 'self' https:` is intentional: arbitrary HTTPS feeds are the
+  feature. Sanitization, not the CSP, protects article HTML.
 - The local proxy, when added, must implement the checklist in
   [docs/FEEDS.md](docs/FEEDS.md): loopback bind, SSRF guard on every redirect,
   size/time limits, content-type allowlist, origin allowlist, optional bearer
@@ -60,6 +67,11 @@ and protecting a user from a compromised browser or extension.
 
 ## Known limitations
 
+- Direct fetch is subject to CORS. A feed that does not send
+  `Access-Control-Allow-Origin` cannot be read by the static site; the app
+  reports this and does not bypass it.
+- Feed images are hotlinked from their publishers. A publisher can see the
+  request (with a no-referrer policy) and can remove or block an image later.
 - The meta CSP cannot prevent framing on GitHub Pages.
 - Sanitization reduces XSS risk; it does not make arbitrary feed HTML trusted.
 - The app runs with the privileges of the page. A malicious browser extension

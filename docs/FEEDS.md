@@ -22,22 +22,23 @@ Therefore:
 
 ## Modes
 
-| Mode         | What it does                                                                     | Setup                                                   | Secrets                        |
-| ------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------ |
-| `direct`     | `fetch(feedUrl, { mode: "cors" })` in the browser.                               | None.                                                   | None.                          |
-| `localProxy` | Sends the feed URL to a loopback HTTP service, which fetches it server-side.     | Run `tools/local-api` and paste its URL in settings.    | Optional shared bearer token.  |
-| `freshrss`   | Uses FreshRSS's Google Reader API for subscriptions, articles, and read state.   | FreshRSS with API access enabled; API password.         | API password, session storage. |
-| `miniflux`   | Uses the Miniflux REST API.                                                      | Miniflux instance and API token; CORS or reverse proxy. | API token, session storage.    |
-| `lemmy`      | Uses Lemmy's native community/user RSS feeds through the direct/proxy transport. | None beyond the feed URL.                               | None.                          |
+| Mode         | What it does                                                                     | Setup                                                   | Status |
+| ------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------- | ------ |
+| `direct`     | `fetch(feedUrl, { mode: "cors" })` in the browser.                               | None.                                                   | v0.2.0 |
+| `localProxy` | Sends the feed URL to a loopback HTTP service, which fetches it server-side.     | Run `tools/local-api` and paste its URL in settings.    | v0.3.0 |
+| `freshrss`   | Uses FreshRSS's Google Reader API for subscriptions, articles, and read state.   | FreshRSS with API access enabled; API password.         | v0.4.0 |
+| `miniflux`   | Uses the Miniflux REST API.                                                      | Miniflux instance and API token; CORS or reverse proxy. | v0.4.0 |
+| `lemmy`      | Uses Lemmy's native community/user RSS feeds through the direct/proxy transport. | None beyond the feed URL.                               | v0.5.0 |
 
 Transport selection is explicit. If a direct fetch fails, the app explains the
-failure and offers the configured alternatives; it never silently reroutes a
-feed through a third party.
-
-The `Sources` section is the UI shell for this contract. It lands with the direct
-transport in v0.2.0; the other rows are documented, not shipped. Folder
+failure and the Sources row keeps the exact error; it never silently reroutes a
+feed through a third party. The local proxy is not implemented yet. Folder
 management is deferred until the FreshRSS phase, when imported categories need a
 review and conflict flow.
+
+The practical consequence: only feeds that send `Access-Control-Allow-Origin`
+load on the public Pages build. In a typical FreshRSS export that is a minority
+of sources, and YouTube's Atom feed is not among them.
 
 ## Direct fetch rules
 
@@ -46,27 +47,33 @@ review and conflict flow.
   header to the feed origin.
 - **Time and size limits.** 10 s timeout; abort after 5 MB; check
   `Content-Type` against XML, RSS/Atom, or JSON Feed types.
-- **Redirects.** Follow a small number of HTTPS redirects; reject a redirect to
-  a non-HTTPS URL.
-- **User agent.** A descriptive user agent is used where the browser allows it;
-  feed owners can identify the demo.
+- **Redirects.** The browser follows redirects; the final URL must still be
+  HTTPS on an HTTPS page. The app cannot inspect intermediate hops from a
+  cross-origin response, which is one reason the local proxy matters.
+- **User agent.** The browser's default user agent is used. The app does not
+  spoof a reader or crawler identity.
+- **Response encoding.** `charset` from `Content-Type` is honored when the
+  browser can decode it; UTF-8 is the fallback.
 - **Errors are classified.** CORS/network, timeout, HTTP status, unsupported
-  content type, too large, parse failure. The UI shows the class and the next
-  step, not a generic "failed".
+  content type, too large, parse failure, empty feed. The UI shows the class and
+  the next step, not a generic "failed".
 
-## Add-feed flow (planned, v0.2.0)
+## Add-feed flow (v0.2.0)
 
-1. Normalize the input (trim, add `https://` when missing, reject non-HTTP(S)).
-2. If the URL returns HTML, look for
-   `<link rel="alternate" type="application/rss+xml|atom+xml|feed+json">` and
-   offer the discovered feed(s).
-3. Fetch through the selected transport with the limits above.
-4. Parse and normalize into articles. Reject empty or malformed feeds with a
+1. Normalize the input (trim, add `https://` when missing, reject non-HTTP(S),
+   reject embedded credentials).
+2. Fetch through the direct transport with the limits above.
+3. Parse and normalize into articles. Reject empty or malformed feeds with a
    specific message.
-5. Store feed metadata: title, site URL, feed URL, icon/colour, added time,
+4. Store feed metadata: title, site URL, feed URL, colour, folder, added time,
    last fetch, last error.
-6. Fetch once so the board is populated immediately. Respect a per-feed cache
-   interval (default 15 minutes) for later refreshes.
+5. Fetch once so the board is populated immediately. On later page loads, only
+   feeds older than the 15-minute cache interval refresh automatically; after
+   that, refresh is manual.
+
+Add-feed discovery from an HTML page (`<link rel="alternate">`) is deferred to
+v0.2.1. A URL that returns HTML is stored as a failed feed so the user can see
+what happened and remove it.
 
 ## Local proxy contract (planned, v0.3.0)
 
@@ -157,23 +164,25 @@ transport. Read-only scope and the comment caveat are documented in
 
 ## OPML
 
-OPML import/export is planned for v0.2.0:
+OPML import ships in v0.2.0:
 
-- Flatten nested outlines; preserve folder names as tags if the UI supports them.
-- Deduplicate by normalized feed URL.
-- Report imported, skipped, and failed feeds separately.
-- Export a plain OPML 2.0 file with feed titles and URLs.
+- Flatten nested outlines; preserve folder names on each feed for a later pass.
+- Deduplicate by normalized feed URL, including duplicates inside one file.
+- Skip `HTML+XPath` and other non-feed outline types with a count.
+- Report imported, duplicates, skipped, invalid, loaded, and failed feeds.
+- Fetch each imported feed once so the Sources list shows real status.
 
-An OPML export can contain private feed URLs. It is read locally, never uploaded,
-and never committed to the repository.
+OPML export is deferred. An OPML file can contain private feed URLs. It is read
+locally, never uploaded, and never committed to the repository.
 
 ## Failure UX
 
-The board should fail honestly:
+The board fails honestly:
 
-- A feed with a CORS error keeps its last cached articles and shows an inline
-  banner with the reason and a link to the transport settings.
-- A feed that has never loaded appears in the feed manager with the exact error;
-  it does not produce an empty card.
-- The demo posts are labeled as demo content and are hidden once real feeds are
-  configured.
+- A feed with a CORS error keeps its last cached articles and shows the exact
+  error on its Sources row.
+- A feed that has never loaded appears in the feed manager with the error and a
+  zero post count; it does not produce an empty card.
+- The first-run board is empty, with a direct link to Sources. There is no demo
+  content to confuse with a working feed.
+- `Retry failed` and `Remove failed` act on every errored row at once.

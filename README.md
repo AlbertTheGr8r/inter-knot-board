@@ -8,7 +8,10 @@ An unofficial fan project and a tech demo — not a service.
 [Feed notes](docs/FEEDS.md) ·
 [License](LICENSE)
 
-![The board, with demo posts](docs/screenshots/board.webp)
+![The board, with feed posts](docs/screenshots/board.webp)
+
+_Documentation screenshots use a local fixture feed with original copy; no
+third-party article art is bundled._
 
 ## What this is
 
@@ -19,11 +22,15 @@ timer, and a post view that opens over a blurred board.
 It is a static site. There are no accounts, no backend, no analytics, and no
 tracking. Your feed list, reading state, and timer live in your browser.
 
-**Status: v0.1.1 — UI demo.** The board, post view, sections, scoped filter,
-mindful timer, adaptive pagination, keyboard basics, responsive layout, and
-generated poster art work. The feed pipeline (RSS/Atom, OPML, local proxy,
-FreshRSS) is the next milestone. Until then the board uses clearly in-world demo
-posts.
+**Status: v0.2.0 — direct feeds.** Add a feed URL or import a FreshRSS/OPML
+export. The board parses RSS 2.0, Atom, RDF, and JSON Feed in the browser,
+caches posts in IndexedDB, and feeds the existing sections, filters, mindful
+timer, and poster fallback.
+
+Direct fetch is the only transport in this release. A static site cannot bypass
+CORS, so feeds that do not send `Access-Control-Allow-Origin` will show a clear
+error in **Sources** until the local proxy lands. The board starts empty: there
+is no demo content and no bundled starter list.
 
 ## Mindful by default
 
@@ -41,18 +48,31 @@ it stays a queue.
 
 ## What works today
 
+- **Direct feeds.** RSS 2.0, Atom, RDF, and JSON Feed, including YouTube-style
+  `media:` thumbnails and escaped HTML. No server, no account, no third-party
+  proxy.
+- **Sources manager.** Add a URL, import OPML, refresh one feed or all, remove a
+  feed, retry failed feeds, or clear the failed ones. Every row shows its last
+  fetch, unread count, and exact error.
+- **CORS honesty.** A blocked feed keeps its cached posts and explains that the
+  browser could not read it. The app never silently routes it through a third
+  party.
+- **Article cache.** IndexedDB stores feeds and posts; read, saved, and opened
+  state live in their own record so cache pruning cannot erase them.
+- **Real media.** Feed images take precedence on cards and in the post view;
+  broken images and image-less posts fall back to the deterministic generated
+  posters.
+- **Sanitized article HTML.** Scripts, event handlers, forms, iframes, and
+  unsafe URLs are stripped. Links open the original source in a new tab.
 - Order-preserving masonry: 1 → 2 → 3 → 4 → 5 → 8 columns, depending on width.
 - Static procedural Inter-Knot masthead behind the wall, hatched and rotated
   without a marquee or game texture.
 - Post cards with a clock/time badge, read-state title color, author strip, tag,
   title, and a one-line preview.
-- Deterministic generated posters for posts without images (8 palettes, 5
-  patterns) — no grey placeholders.
 - Post dialog: blurred backdrop, source bar, save toggle, red close button,
-  optional system note, poster/media pane, scrollable article, `Expand`, quote
-  card, tags, comments with floor badges.
+  media pane, scrollable sanitized article, `Expand`, tags, and original link.
 - Board / Saved / Sources / History sections. Opening a post marks it read and
-  files it in History; Saved is a real library, not demo state.
+  files it in History.
 - Bottom-right filter: All / Unread / Read plus source scope, with the scope
   controls pinned nearest the pill.
 - Mindful timer and Proxy sheet: cap choices, Unlimited, refill, compact density,
@@ -62,6 +82,8 @@ it stays a queue.
 - Keyboard: cards are focusable; `Enter`/`Space` opens; the dialog traps focus
   and closes on `Escape`.
 - Static build with type-checking and a production CSP.
+
+![The Sources manager with two direct feeds](docs/screenshots/sources.webp)
 
 ![The post view](docs/screenshots/post.webp)
 
@@ -76,7 +98,7 @@ bun run check    # type-check + tests + production build
 bun run preview  # preview the production build
 ```
 
-## How feeds will work
+## How feeds work
 
 A static site cannot bypass the browser's CORS rules. Direct feeds are the
 default and only mode that works without help; feeds that do not send
@@ -84,16 +106,15 @@ default and only mode that works without help; feeds that do not send
 
 | Mode                 | Works on GitHub Pages             | Setup                                         |
 | -------------------- | --------------------------------- | --------------------------------------------- |
-| **Direct** (default) | Only CORS-enabled feeds           | None — planned v0.2.0                         |
+| **Direct** (default) | Only CORS-enabled feeds           | None — shipped in v0.2.0                      |
 | **Local proxy**      | Yes, from `127.0.0.1`             | Run the small Bun proxy — planned v0.3.0      |
 | **FreshRSS**         | Yes                               | Your instance + API password — planned v0.4.0 |
 | **Miniflux**         | Usually; may need a reverse proxy | Your instance + API token — planned v0.4.0    |
 | **Lemmy**            | Same as direct                    | Native community/user RSS — planned v0.5.0    |
 
-Only the UI demo is implemented in v0.1.1; the rows above are documented
-contracts, not shipped features. The `Sources` section is the shell that direct
-RSS fills in v0.2.0. Folder management is deliberately deferred until the
-FreshRSS phase, when imported categories need a review flow.
+The Sources section is the real manager in v0.2.0. Folder management is
+deliberately deferred until the FreshRSS phase, when imported categories need a
+review flow. OPML folders are preserved on import but not shown yet.
 
 The planned daily-use setup is **GitHub Pages + local proxy + browser storage**,
 with FreshRSS or Miniflux as optional sync backends. The app will never ship a
