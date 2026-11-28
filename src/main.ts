@@ -8,6 +8,8 @@ import "@fontsource/barlow/latin-900.css";
 import "@fontsource/barlow/latin-600-italic.css";
 import "@fontsource/barlow/latin-800-italic.css";
 import "@fontsource/barlow/latin-900-italic.css";
+import "@fontsource/barlow-condensed/latin-700-italic.css";
+import "@fontsource/barlow-condensed/latin-800-italic.css";
 
 // UI SDK behaviors: unstyled custom elements, light DOM.
 import "@ui-sdk/web/dialog";

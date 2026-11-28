@@ -24,7 +24,7 @@ UI is built against the right seams.
 | Components | Lit 3, light DOM                     | Small reactive layer; global CSS and design tokens apply without shadow-boundary work. |
 | Behaviors  | `@ui-sdk/web`                        | Unstyled Dialog/Tabs with focus management and ARIA. We own every pixel.               |
 | Styling    | Handwritten CSS + tokens             | The UI is bespoke; utility classes would fight the chrome and poster art.              |
-| Fonts      | Anton + Barlow via Fontsource        | Self-hosted lookalikes; the game's fonts are proprietary and not shipped.              |
+| Fonts      | Anton + Barlow + Barlow Condensed    | Self-hosted lookalikes; the game's fonts are proprietary and not shipped.              |
 | Security   | DOMPurify (planned), CSP meta        | Feed HTML is untrusted.                                                                |
 | Storage    | `localStorage` + IndexedDB (planned) | Feed metadata/settings are small; articles need a larger cache.                        |
 
@@ -176,6 +176,9 @@ request.
 - **Dialogs.** `@ui-sdk/web/dialog` provides the top layer, focus trap and
   `openchange` lifecycle. CSS animates `data-starting-style` /
   `data-ending-style`.
+- **Backdrop.** A fixed, static SVG masthead: three staggered lines filled with
+  a dark hatch and rotated `-20deg`. Barlow Condensed carries the display type.
+  There is no marquee and no game texture; it is original, generated markup.
 
 ## Testing
 

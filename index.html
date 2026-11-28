@@ -14,6 +14,56 @@
     <title>Inter-Knot Board — a static RSS reader demo</title>
   </head>
   <body>
+    <div class="ik-backdrop" aria-hidden="true">
+      <svg
+        viewBox="0 0 1000 620"
+        preserveAspectRatio="xMidYMid slice"
+        role="presentation"
+      >
+        <defs>
+          <pattern
+            id="ik-backdrop-hatch"
+            width="7"
+            height="7"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
+            <rect width="7" height="7" fill="#1c1d1c"></rect>
+            <line
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="7"
+              stroke="#161515"
+              stroke-width="2"
+            ></line>
+          </pattern>
+        </defs>
+        <g fill="url(#ik-backdrop-hatch)" transform="rotate(-20 500 310)">
+          <text
+            class="ik-backdrop__line"
+            x="-20"
+            y="230"
+            textLength="1040"
+            lengthAdjust="spacingAndGlyphs"
+          >
+            INTERKNOT
+          </text>
+          <text
+            class="ik-backdrop__line"
+            x="30"
+            y="390"
+            textLength="1040"
+            lengthAdjust="spacingAndGlyphs"
+          >
+            NETWORK
+          </text>
+          <text class="ik-backdrop__tag" x="500" y="470" text-anchor="middle">
+            THE PROXY NETWORK
+          </text>
+        </g>
+      </svg>
+    </div>
     <ik-app></ik-app>
     <noscript>
       <p style="padding: 24px; font-family: sans-serif; color: #f4f3ee">

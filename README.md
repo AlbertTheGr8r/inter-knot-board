@@ -42,6 +42,8 @@ it stays a queue.
 ## What works today
 
 - Order-preserving masonry: 1 → 2 → 3 → 4 → 5 → 8 columns, depending on width.
+- Static procedural Inter-Knot masthead behind the wall, hatched and rotated
+  without a marquee or game texture.
 - Post cards with a clock/time badge, read-state title color, author strip, tag,
   title, and a one-line preview.
 - Deterministic generated posters for posts without images (8 palettes, 5
