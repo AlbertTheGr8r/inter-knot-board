@@ -235,6 +235,7 @@ ui-dialog-close {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   object-fit: cover;
+  object-position: 50% 0%;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.6),
     0 0 40px rgba(107, 208, 255, 0.04);
