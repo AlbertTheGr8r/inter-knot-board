@@ -190,9 +190,10 @@ export class IkProxy extends IkElement {
                   <h3>This build</h3>
                 </div>
                 <p class="ik-proxy__fine">
-                  The board is a static demo. Reading state, the timer, and the
-                  cap stay in this browser. No account, no telemetry, no hosted
-                  proxy.
+                  The board reads direct feeds. Your feed list, cached posts,
+                  reading state, timer, and cap stay in this browser. No
+                  account, telemetry, or hosted proxy. Feeds that block CORS
+                  need the local proxy, which is the next milestone.
                 </p>
               </section>
             </div>

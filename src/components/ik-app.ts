@@ -1,12 +1,41 @@
 import { html, nothing, type TemplateResult } from "lit";
-import { demoArticles } from "../data/demo";
-import type { Article } from "../data/types";
+import type { Article, Feed } from "../data/types";
 import { filterArticles, type Scope } from "../lib/article-filter";
 import {
-  applyDemoState,
-  loadDemoState,
-  saveDemoState,
-} from "../lib/demo-state";
+  FeedError,
+  errorCode,
+  errorMessage,
+  statusOf,
+} from "../lib/feed/errors";
+import { normalizeFeed } from "../lib/feed/normalize";
+import type { OpmlResult } from "../lib/feed/opml";
+import { parseFeed } from "../lib/feed/parse";
+import {
+  isFeedStale,
+  mapWithConcurrency,
+  REFRESH_CONCURRENCY,
+} from "../lib/feed/refresh";
+import {
+  applyReadingState,
+  emptyReadingState,
+  flattenCache,
+  loadArticleCache,
+  loadFeeds,
+  loadReadingState,
+  mergeArticles,
+  saveArticleCache,
+  saveFeeds,
+  saveReadingState,
+  type ArticleCache,
+  type ReadingState,
+} from "../lib/feed/store";
+import { fetchFeed } from "../lib/feed/transport";
+import {
+  feedColorForUrl,
+  feedIdForUrl,
+  feedTitleFromUrl,
+  normalizeFeedUrl,
+} from "../lib/feed/url";
 import {
   MINDFUL_IDLE_MS,
   MINDFUL_TICK_MS,
@@ -37,13 +66,20 @@ import type { IkBoard } from "./ik-board";
 import type { HistoryEntry } from "./ik-history";
 import type { IkPostDialog } from "./ik-post-dialog";
 import type { IkProxy } from "./ik-proxy";
-import type { SourceSummary } from "./ik-sources";
+import type { IkSources, SourceSummary } from "./ik-sources";
 
 type Section = "board" | "saved" | "sources" | "history";
 
 interface ScopeOption {
   value: Scope;
   label: string;
+}
+
+interface FeedSeed {
+  title: string;
+  xmlUrl: string;
+  htmlUrl?: string;
+  folder?: string;
 }
 
 const SCOPE_OPTIONS: ScopeOption[] = [
@@ -54,7 +90,13 @@ const SCOPE_OPTIONS: ScopeOption[] = [
 
 export class IkApp extends IkElement {
   static properties = {
-    articles: { attribute: false },
+    feeds: { state: true },
+    articles: { state: true },
+    loading: { state: true },
+    busyIds: { state: true },
+    importing: { state: true },
+    importStatus: { state: true },
+    addError: { state: true },
     section: { state: true },
     scope: { state: true },
     sourceFilter: { state: true },
@@ -66,19 +108,28 @@ export class IkApp extends IkElement {
     limit: { state: true },
   };
 
-  private persistedState = loadDemoState();
-
-  articles: Article[] = applyDemoState(demoArticles, this.persistedState);
+  feeds: Feed[] = [];
+  articles: Article[] = [];
+  loading = true;
+  busyIds: string[] = [];
+  importing = false;
+  importStatus: string | null = null;
+  addError: string | null = null;
   section: Section = "board";
   scope: Scope = "all";
   sourceFilter: string | null = null;
-  openedAt = new Map(Object.entries(this.persistedState?.openedAt ?? {}));
+  openedAt = new Map<string, number>();
   mindful: MindfulState = loadMindfulState();
   compact = loadCompact();
   readOnScroll = loadReadOnScroll();
   pageSize = 24;
   limit = 0;
 
+  private cache: ArticleCache = {};
+  private reading: ReadingState = emptyReadingState();
+  private persistChain: Promise<void> = Promise.resolve();
+  private readingChain: Promise<void> = Promise.resolve();
+  private statusToken = 0;
   private timerId = 0;
   private lastInteraction = Date.now();
   private hiddenAt = 0;
@@ -101,7 +152,7 @@ export class IkApp extends IkElement {
   }
 
   protected firstUpdated(): void {
-    void this.updateComplete.then(() => this.syncPageSize(true));
+    void this.bootstrap();
   }
 
   disconnectedCallback(): void {
@@ -118,6 +169,8 @@ export class IkApp extends IkElement {
   }
 
   render(): TemplateResult {
+    const busy = this.busyIds.length > 0 || this.importing;
+
     return html`
       <a class="ik-skip" href="#board">Skip to board</a>
 
@@ -129,33 +182,36 @@ export class IkApp extends IkElement {
         <ik-topbar
           .unread=${this.unreadCount}
           .mindful=${this.mindful}
+          .busy=${busy}
           @ik-refresh=${this.onRefresh}
           @ik-open-proxy=${this.onOpenProxy}
         ></ik-topbar>
 
         <main class="ik-main" id="board">
           <ui-tabs-panel value="board">
-            <ik-board
-              .articles=${this.pagedVisible}
-              .readOnScroll=${this.readOnScroll && this.scope !== "unread"}
-              @ik-mark-read=${this.onMarkRead}
-            ></ik-board>
-            ${this.renderBoardFoot()}
+            ${this.renderBoardPanel()}
           </ui-tabs-panel>
 
           <ui-tabs-panel value="saved">
-            <ik-board
-              .articles=${this.savedArticles}
-              .readOnScroll=${this.readOnScroll && this.scope !== "unread"}
-              @ik-mark-read=${this.onMarkRead}
-            ></ik-board>
+            ${this.renderSavedPanel()}
           </ui-tabs-panel>
 
           <ui-tabs-panel value="sources">
             <ik-sources
+              .feeds=${this.feeds}
               .sources=${this.sourceSummaries}
-              @ik-open-source=${this.onOpenSource}
+              .busyIds=${this.busyIds}
+              .importing=${this.importing}
+              .importStatus=${this.importStatus}
+              .addError=${this.addError}
+              @ik-add-feed=${this.onAddFeed}
+              @ik-import-opml=${this.onImportOpml}
+              @ik-refresh-feed=${this.onRefreshFeed}
+              @ik-remove-feed=${this.onRemoveFeed}
               @ik-refresh=${this.onRefresh}
+              @ik-retry-failed=${this.onRetryFailed}
+              @ik-remove-failed=${this.onRemoveFailed}
+              @ik-open-source=${this.onOpenSource}
             ></ik-sources>
           </ui-tabs-panel>
 
@@ -167,7 +223,7 @@ export class IkApp extends IkElement {
           </ui-tabs-panel>
         </main>
 
-        ${this.showFilter ? this.renderFilter() : nothing}
+        ${this.showFilter && !this.loading ? this.renderFilter() : nothing}
 
         <ik-post-dialog
           @ik-post-closed=${this.onPostClosed}
@@ -186,6 +242,108 @@ export class IkApp extends IkElement {
           @ik-proxy-closed=${this.onProxyClosed}
         ></ik-proxy>
       </ui-tabs>
+    `;
+  }
+
+  private renderBoardPanel(): TemplateResult {
+    if (this.loading) {
+      return html`
+        <div class="ik-board ik-board--empty">
+          <div class="ik-empty">
+            <span class="ik-empty__mark">[ SYNCING ]</span>
+            <h2>Reading the wires</h2>
+            <p>Loading your cached board.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    if (this.articles.length === 0) {
+      return this.renderEmptyBoard();
+    }
+
+    if (this.pagedVisible.length === 0) {
+      return html`
+        <div class="ik-board ik-board--empty">
+          <div class="ik-empty">
+            <span class="ik-empty__mark">[ EMPTY ]</span>
+            <h2>No posts match this filter</h2>
+            <p>
+              Clear the source or scope filter to see the rest of the board.
+            </p>
+            <button
+              class="ik-empty__button"
+              type="button"
+              @click=${this.clearFilters}
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    return html`
+      <ik-board
+        .articles=${this.pagedVisible}
+        .readOnScroll=${this.readOnScroll && this.scope !== "unread"}
+        @ik-mark-read=${this.onMarkRead}
+      ></ik-board>
+      ${this.renderBoardFoot()}
+    `;
+  }
+
+  private renderSavedPanel(): TemplateResult {
+    if (this.loading) return html``;
+
+    if (this.savedArticles.length === 0) {
+      return html`
+        <div class="ik-board ik-board--empty">
+          <div class="ik-empty">
+            <span class="ik-empty__mark">[ EMPTY ]</span>
+            <h2>Nothing saved yet</h2>
+            <p>Save a post from the reader and it will wait here.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    return html`
+      <ik-board
+        .articles=${this.savedArticles}
+        .readOnScroll=${this.readOnScroll && this.scope !== "unread"}
+        @ik-mark-read=${this.onMarkRead}
+      ></ik-board>
+    `;
+  }
+
+  private renderEmptyBoard(): TemplateResult {
+    const hasFeeds = this.feeds.length > 0;
+    const failed = this.feeds.filter((feed) => feed.lastError).length;
+
+    return html`
+      <div class="ik-board ik-board--empty">
+        <div class="ik-empty">
+          <span class="ik-empty__mark">[ NO SIGNAL ]</span>
+          <h2>
+            ${hasFeeds ? "No readable posts yet" : "Nothing on the board yet"}
+          </h2>
+          <p>
+            ${
+              hasFeeds
+                ? `${this.feeds.length} ${this.feeds.length === 1 ? "feed is" : "feeds are"} wired up, but ${failed > 0 ? `${failed} could not load.` : "none returned posts."} Check Sources for the exact error.`
+                : "Feeds are fetched directly by your browser. Paste a feed URL or import a FreshRSS/OPML export to start. Only feeds that allow cross-origin reads will load until the local proxy lands."
+            }
+          </p>
+          <button
+            class="ik-empty__button"
+            type="button"
+            @click=${this.goToSources}
+          >
+            ${hasFeeds ? "Open Sources" : "Wire up Sources"}
+          </button>
+        </div>
+      </div>
     `;
   }
 
@@ -307,7 +465,10 @@ export class IkApp extends IkElement {
   }
 
   private get showFilter(): boolean {
-    return this.section === "board" || this.section === "saved";
+    return (
+      this.feeds.length > 0 &&
+      (this.section === "board" || this.section === "saved")
+    );
   }
 
   private get sectionArticles(): Article[] {
@@ -338,11 +499,31 @@ export class IkApp extends IkElement {
   }
 
   private get filterSources(): SourceSummary[] {
-    return this.summarize(this.sectionArticles);
+    if (this.section === "saved") return this.summarize(this.sectionArticles);
+    return this.sourceSummaries;
   }
 
   private get sourceSummaries(): SourceSummary[] {
-    return this.summarize(this.articles);
+    const sources = new Map<string, SourceSummary>();
+
+    for (const feed of this.feeds) {
+      sources.set(feed.id, {
+        id: feed.id,
+        title: feed.title,
+        color: feed.color,
+        unread: 0,
+        total: 0,
+      });
+    }
+
+    for (const article of this.articles) {
+      const source = sources.get(article.feedId);
+      if (!source) continue;
+      source.total += 1;
+      if (article.unread) source.unread += 1;
+    }
+
+    return [...sources.values()].sort((a, b) => a.title.localeCompare(b.title));
   }
 
   private get historyEntries(): HistoryEntry[] {
@@ -362,8 +543,10 @@ export class IkApp extends IkElement {
   private get filterLabel(): string {
     if (this.sourceFilter) {
       return (
+        this.feeds.find((feed) => feed.id === this.sourceFilter)?.title ??
         this.articles.find((article) => article.feedId === this.sourceFilter)
-          ?.feedTitle ?? "Source"
+          ?.feedTitle ??
+        "Source"
       );
     }
 
@@ -398,6 +581,28 @@ export class IkApp extends IkElement {
     return [...sources.values()].sort((a, b) => a.title.localeCompare(b.title));
   }
 
+  private async bootstrap(): Promise<void> {
+    const [feeds, cache, reading] = await Promise.all([
+      loadFeeds(),
+      loadArticleCache(),
+      loadReadingState(),
+    ]);
+
+    this.feeds = feeds;
+    this.cache = cache;
+    this.reading = reading;
+    this.openedAt = new Map(Object.entries(reading.openedAt));
+    this.articles = applyReadingState(flattenCache(cache), reading);
+    this.loading = false;
+    await this.updateComplete;
+    this.syncPageSize(true);
+
+    const stale = feeds.filter((feed) => isFeedStale(feed));
+    if (stale.length > 0) {
+      void this.refreshMany(stale);
+    }
+  }
+
   private onSectionChange = (event: Event): void => {
     const detail = (event as CustomEvent<{ value: Section }>).detail;
     if (!detail?.value) return;
@@ -408,6 +613,15 @@ export class IkApp extends IkElement {
     this.section = detail.value;
     this.closeFilter();
     if (detail.value === "board") this.resetPagination();
+  };
+
+  private goToSources = (): void => {
+    this.section = "sources";
+    this.pauseMindful();
+    this.closeFilter();
+    void this.updateComplete.then(() => {
+      this.querySelector<IkSources>("ik-sources")?.focusAdd();
+    });
   };
 
   private onOpenSource = (event: CustomEvent<string>): void => {
@@ -500,6 +714,7 @@ export class IkApp extends IkElement {
       !this.postOpen &&
       !this.proxyOpen &&
       this.section === "board" &&
+      this.articles.length > 0 &&
       now - this.lastInteraction <= MINDFUL_IDLE_MS;
 
     if (!canDrain) {
@@ -526,18 +741,20 @@ export class IkApp extends IkElement {
     event: CustomEvent<{ id: string; starred: boolean }>,
   ) => {
     const { id, starred } = event.detail;
-    this.articles = this.articles.map((article) =>
-      article.id === id ? { ...article, starred } : article,
-    );
-    this.persistReadingState();
+    const starredIds = new Set(this.reading.starredIds);
+    if (starred) starredIds.add(id);
+    else starredIds.delete(id);
+    this.reading = { ...this.reading, starredIds: [...starredIds] };
+    this.syncArticlesFromState();
+    this.persistReading();
   };
 
   private onMarkRead = (event: CustomEvent<string[]>): void => {
-    const ids = new Set(event.detail);
-    this.articles = this.articles.map((article) =>
-      ids.has(article.id) ? { ...article, unread: false } : article,
-    );
-    this.persistReadingState();
+    const readIds = new Set(this.reading.readIds);
+    for (const id of event.detail) readIds.add(id);
+    this.reading = { ...this.reading, readIds: [...readIds] };
+    this.syncArticlesFromState();
+    this.persistReading();
   };
 
   private onReadOnScroll = (event: CustomEvent<boolean>): void => {
@@ -546,26 +763,300 @@ export class IkApp extends IkElement {
   };
 
   private markOpened(article: Article): void {
-    this.articles = this.articles.map((item) =>
-      item.id === article.id ? { ...item, unread: false } : item,
-    );
-
-    const opened = new Map(this.openedAt);
-    opened.set(article.id, Date.now());
-    this.openedAt = opened;
-    this.persistReadingState();
+    const readIds = new Set(this.reading.readIds);
+    readIds.add(article.id);
+    const openedAt = { ...this.reading.openedAt, [article.id]: Date.now() };
+    this.reading = { ...this.reading, readIds: [...readIds], openedAt };
+    this.openedAt = new Map(Object.entries(openedAt));
+    this.syncArticlesFromState();
+    this.persistReading();
   }
 
-  private persistReadingState(): void {
-    saveDemoState({
-      readIds: this.articles
-        .filter((article) => !article.unread)
-        .map((article) => article.id),
-      starredIds: this.articles
-        .filter((article) => article.starred)
-        .map((article) => article.id),
-      openedAt: Object.fromEntries(this.openedAt),
+  private persistReading(): void {
+    const state = this.reading;
+    this.readingChain = this.readingChain
+      .then(() => saveReadingState(state))
+      .catch(() => undefined);
+  }
+
+  private syncArticlesFromState(): void {
+    this.articles = applyReadingState(flattenCache(this.cache), this.reading);
+  }
+
+  private retainedIds(): Set<string> {
+    // Read IDs are kept in the reading record, not the article cache. Only
+    // saved posts and posts the user actually opened need their bodies kept
+    // after they rotate out of the feed.
+    return new Set([
+      ...this.reading.starredIds,
+      ...Object.keys(this.reading.openedAt),
+    ]);
+  }
+
+  private persistState(): void {
+    const feeds = this.feeds;
+    const cache = this.cache;
+    this.persistChain = this.persistChain
+      .then(() => Promise.all([saveFeeds(feeds), saveArticleCache(cache)]))
+      .then(() => undefined)
+      .catch(() => undefined);
+  }
+
+  private createFeed(seed: FeedSeed): Feed | null {
+    const url = normalizeFeedUrl(seed.xmlUrl);
+    if (!url) return null;
+
+    return {
+      id: feedIdForUrl(url),
+      url,
+      title: seed.title.trim() || feedTitleFromUrl(url),
+      siteUrl: seed.htmlUrl,
+      color: feedColorForUrl(url),
+      folder: seed.folder,
+      addedAt: new Date().toISOString(),
+    };
+  }
+
+  private onAddFeed = (event: CustomEvent<string>): void => {
+    void this.addFeed(event.detail);
+  };
+
+  private async addFeed(raw: string): Promise<void> {
+    const token = ++this.statusToken;
+    this.addError = null;
+    this.importStatus = null;
+
+    const normalized = normalizeFeedUrl(raw);
+    if (!normalized) {
+      this.addError = "Enter a valid http(s) feed URL.";
+      return;
+    }
+    if (this.feeds.some((feed) => feed.url === normalized)) {
+      this.addError = "That feed is already on the board.";
+      return;
+    }
+
+    const feed = this.createFeed({
+      title: feedTitleFromUrl(normalized),
+      xmlUrl: normalized,
     });
+    if (!feed) {
+      this.addError = "Enter a valid http(s) feed URL.";
+      return;
+    }
+
+    this.feeds = [...this.feeds, feed];
+    this.persistState();
+
+    const updated = await this.refreshFeed(feed);
+    if (token !== this.statusToken) return;
+    if (updated.lastError) {
+      this.importStatus = `Feed added, but the direct fetch failed: ${updated.lastError.message}`;
+    } else {
+      this.importStatus = "Feed added.";
+    }
+  }
+
+  private onImportOpml = (
+    event: CustomEvent<OpmlResult & { fileName?: string }>,
+  ): void => {
+    void this.importOpml(event.detail);
+  };
+
+  private async importOpml(result: OpmlResult): Promise<void> {
+    const token = ++this.statusToken;
+    this.importing = true;
+    this.addError = null;
+    this.importStatus = null;
+
+    const existing = new Set(this.feeds.map((feed) => feed.url));
+    const imported: Feed[] = [];
+    let duplicates = result.duplicates;
+
+    for (const seed of result.feeds) {
+      const feed = this.createFeed(seed);
+      if (!feed) continue;
+      if (existing.has(feed.url)) {
+        duplicates += 1;
+        continue;
+      }
+      existing.add(feed.url);
+      imported.push(feed);
+    }
+
+    if (imported.length === 0) {
+      this.importing = false;
+      this.importStatus = [
+        "No new feeds found.",
+        duplicates > 0 ? `${duplicates} duplicate` : "",
+        result.skipped > 0 ? `${result.skipped} non-RSS skipped` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      return;
+    }
+
+    this.feeds = [...this.feeds, ...imported];
+    this.persistState();
+    this.importStatus = `Importing ${imported.length} feeds…`;
+
+    let done = 0;
+    let failed = 0;
+    await mapWithConcurrency(imported, REFRESH_CONCURRENCY, async (feed) => {
+      const updated = await this.refreshFeed(feed);
+      done += 1;
+      if (updated.lastError) failed += 1;
+      if (token === this.statusToken) {
+        this.importStatus = `Importing ${done}/${imported.length}…`;
+      }
+    });
+
+    this.importing = false;
+    if (token !== this.statusToken) return;
+    this.importStatus = [
+      `${imported.length} imported`,
+      `${imported.length - failed} loaded`,
+      failed > 0 ? `${failed} failed` : "",
+      duplicates > 0 ? `${duplicates} duplicate` : "",
+      result.skipped > 0 ? `${result.skipped} non-RSS skipped` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }
+
+  private onRefresh = (): void => {
+    void this.refreshAll();
+  };
+
+  private onRefreshFeed = (event: CustomEvent<string>): void => {
+    const feed = this.feeds.find((item) => item.id === event.detail);
+    if (feed) void this.refreshFeed(feed);
+  };
+
+  private onRetryFailed = (): void => {
+    const failed = this.feeds.filter((feed) => feed.lastError);
+    if (failed.length > 0) void this.refreshMany(failed);
+  };
+
+  private onRemoveFeed = (event: CustomEvent<string>): void => {
+    this.removeFeed(event.detail);
+  };
+
+  private onRemoveFailed = (): void => {
+    const failed = this.feeds.filter((feed) => feed.lastError);
+    if (failed.length === 0) return;
+
+    const failedIds = new Set(failed.map((feed) => feed.id));
+    this.feeds = this.feeds.filter((feed) => !failedIds.has(feed.id));
+    for (const id of failedIds) delete this.cache[id];
+    if (this.sourceFilter && failedIds.has(this.sourceFilter)) {
+      this.sourceFilter = null;
+    }
+    this.syncArticlesFromState();
+    this.persistState();
+    this.resetPagination();
+  };
+
+  private async refreshAll(): Promise<void> {
+    if (this.feeds.length === 0) return;
+    await this.refreshMany(this.feeds);
+  }
+
+  private async refreshMany(feeds: Feed[]): Promise<void> {
+    await mapWithConcurrency(feeds, REFRESH_CONCURRENCY, async (feed) => {
+      await this.refreshFeed(feed);
+    });
+  }
+
+  private async refreshFeed(feed: Feed): Promise<Feed> {
+    if (this.busyIds.includes(feed.id)) return feed;
+
+    this.busyIds = [...this.busyIds, feed.id];
+
+    try {
+      const response = await fetchFeed(feed.url);
+      const parsed = parseFeed(response.body, {
+        feedUrl: response.finalUrl,
+        contentType: response.contentType,
+      });
+      if (parsed.items.length === 0) {
+        throw new FeedError("empty", "The feed returned no posts.");
+      }
+
+      const articles = normalizeFeed(
+        parsed,
+        {
+          ...feed,
+          title:
+            parsed.title && parsed.title !== "Untitled feed"
+              ? parsed.title
+              : feed.title,
+        },
+        response.fetchedAt,
+      );
+      if (articles.length === 0) {
+        throw new FeedError("empty", "The feed returned no readable posts.");
+      }
+
+      // The feed may have been removed while the request was in flight.
+      if (!this.feeds.some((item) => item.id === feed.id)) return feed;
+
+      this.cache = {
+        ...this.cache,
+        [feed.id]: mergeArticles(
+          this.cache[feed.id] ?? [],
+          articles,
+          this.retainedIds(),
+        ),
+      };
+
+      const nextFeed: Feed = {
+        ...feed,
+        title:
+          parsed.title && parsed.title !== "Untitled feed"
+            ? parsed.title
+            : feed.title,
+        siteUrl: parsed.siteUrl ?? feed.siteUrl,
+        lastFetchedAt: response.fetchedAt,
+        lastCheckedAt: response.fetchedAt,
+        lastError: undefined,
+      };
+      this.feeds = this.feeds.map((item) =>
+        item.id === feed.id ? nextFeed : item,
+      );
+      this.syncArticlesFromState();
+      this.persistState();
+      return nextFeed;
+    } catch (error) {
+      const checkedAt = new Date().toISOString();
+      const nextFeed: Feed = {
+        ...feed,
+        lastCheckedAt: checkedAt,
+        lastError: {
+          code: errorCode(error),
+          message: errorMessage(error),
+          at: checkedAt,
+          status: statusOf(error),
+        },
+      };
+      this.feeds = this.feeds.map((item) =>
+        item.id === feed.id ? nextFeed : item,
+      );
+      this.persistState();
+      return nextFeed;
+    } finally {
+      this.busyIds = this.busyIds.filter((id) => id !== feed.id);
+    }
+  }
+
+  private removeFeed(id: string): void {
+    this.feeds = this.feeds.filter((feed) => feed.id !== id);
+    delete this.cache[id];
+    const clearedSource = this.sourceFilter === id;
+    if (clearedSource) this.sourceFilter = null;
+    this.syncArticlesFromState();
+    this.persistState();
+    if (clearedSource || this.feeds.length === 0) this.resetPagination();
   }
 
   private setScope(value: Scope): void {
@@ -576,6 +1067,13 @@ export class IkApp extends IkElement {
 
   private setSource(value: string | null): void {
     this.sourceFilter = value;
+    this.closeFilter();
+    this.resetPagination();
+  }
+
+  private clearFilters(): void {
+    this.scope = "all";
+    this.sourceFilter = null;
     this.closeFilter();
     this.resetPagination();
   }
@@ -621,11 +1119,6 @@ export class IkApp extends IkElement {
     const details = this.querySelector<HTMLDetailsElement>(".ik-filter");
     if (details) details.open = false;
   }
-
-  private onRefresh = (): void => {
-    this.classList.add("is-syncing");
-    window.setTimeout(() => this.classList.remove("is-syncing"), 900);
-  };
 
   private onDensity = (event: Event): void => {
     const detail = (event as CustomEvent<boolean>).detail;

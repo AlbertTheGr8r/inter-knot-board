@@ -128,6 +128,13 @@ export class IkPoster extends IkElement {
     const uid = `ik${(seed % 1679616).toString(36)}`;
     const word = headlineWord(article.title);
     const feedWord = article.feedTitle.split(/\s+/)[0]?.toUpperCase() ?? "FEED";
+    const feedCode =
+      article.feedTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 18)
+        .toUpperCase() || "FEED";
 
     return html`
       <div
@@ -168,9 +175,7 @@ export class IkPoster extends IkElement {
 
         <span class="ik-poster__feed">${feedWord}</span>
         <span class="ik-poster__word">${word}</span>
-        <span class="ik-poster__code"
-          >INTER-KNOT // ${article.feedId.toUpperCase()}</span
-        >
+        <span class="ik-poster__code">INTER-KNOT // ${feedCode}</span>
       </div>
     `;
   }

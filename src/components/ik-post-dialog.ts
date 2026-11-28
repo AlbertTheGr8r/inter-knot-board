@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from "lit";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import type { Article } from "../data/types";
 import { compactNumber, initials, relativeTime } from "../lib/format";
 import { IkElement } from "../ui/base";
@@ -21,11 +22,13 @@ export class IkPostDialog extends IkElement {
     article: { attribute: false },
     expanded: { state: true },
     saved: { state: true },
+    imageFailed: { state: true },
   };
 
   article: Article | null = null;
   expanded = false;
   saved = false;
+  imageFailed = false;
 
   private dialogEl: DialogElement | null = null;
 
@@ -44,6 +47,7 @@ export class IkPostDialog extends IkElement {
     this.article = article;
     this.expanded = false;
     this.saved = Boolean(article.starred);
+    this.imageFailed = false;
     await this.updateComplete;
 
     if (!this.dialogEl) {
@@ -123,8 +127,25 @@ export class IkPostDialog extends IkElement {
         }
 
         <div class="ik-post__body">
-          <figure class="ik-post__figure">
-            <ik-poster .article=${article}></ik-poster>
+          <figure
+            class="ik-post__figure"
+            data-has-image=${article.image && !this.imageFailed ? "true" : "false"}
+          >
+            ${
+              article.image && !this.imageFailed
+                ? html`
+                    <img
+                      class="ik-post__image"
+                      src=${article.image}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      referrerpolicy="no-referrer"
+                      @error=${this.onImageError}
+                    />
+                  `
+                : html`<ik-poster .article=${article}></ik-poster>`
+            }
             ${
               article.picked
                 ? html`<figcaption class="ik-post__pick">
@@ -149,7 +170,13 @@ export class IkPostDialog extends IkElement {
             </p>
 
             <div class=${`ik-post__content${clamped ? " is-clamped" : ""}`}>
-              ${article.content.map((paragraph) => html`<p>${paragraph}</p>`)}
+              ${
+                article.contentHtml
+                  ? unsafeHTML(article.contentHtml)
+                  : article.content.map(
+                      (paragraph) => html`<p>${paragraph}</p>`,
+                    )
+              }
             </div>
 
             ${
@@ -184,7 +211,12 @@ export class IkPostDialog extends IkElement {
 
             <div class="ik-post__tags">
               <span class="ik-chip">#${article.tag.toLowerCase()}</span>
-              <span class="ik-chip">#${article.feedId}</span>
+              <span class="ik-chip"
+                >#${article.feedTitle
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, "-")
+                  .replace(/^-|-$/g, "")}</span
+              >
               ${
                 article.picked
                   ? html`<span class="ik-chip ik-chip--blue">starred</span>`
@@ -251,6 +283,10 @@ export class IkPostDialog extends IkElement {
 
   private toggleExpanded = (): void => {
     this.expanded = !this.expanded;
+  };
+
+  private onImageError = (): void => {
+    this.imageFailed = true;
   };
 
   private toggleSave = (): void => {

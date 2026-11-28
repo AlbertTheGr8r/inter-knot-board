@@ -15,7 +15,7 @@ export class IkTopbar extends IkElement {
   static properties = {
     unread: { type: Number },
     mindful: { attribute: false },
-    busy: { state: true },
+    busy: { type: Boolean },
   };
 
   unread = 0;
@@ -34,7 +34,9 @@ export class IkTopbar extends IkElement {
             class=${`ik-refresh${this.busy ? " is-busy" : ""}`}
             type="button"
             aria-label="Refresh feeds"
-            title="Refresh feeds"
+            title=${this.busy ? "Refreshing feeds" : "Refresh feeds"}
+            aria-busy=${this.busy ? "true" : "false"}
+            ?disabled=${this.busy}
             @click=${this.refresh}
           >
             ${refreshIcon}
@@ -102,13 +104,9 @@ export class IkTopbar extends IkElement {
 
   private refresh = (): void => {
     if (this.busy) return;
-    this.busy = true;
     this.dispatchEvent(
       new CustomEvent("ik-refresh", { bubbles: true, composed: true }),
     );
-    window.setTimeout(() => {
-      this.busy = false;
-    }, 900);
   };
 
   private openProxy = (): void => {

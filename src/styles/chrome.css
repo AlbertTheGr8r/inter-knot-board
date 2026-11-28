@@ -61,11 +61,15 @@
   height: 22px;
 }
 
-.ik-refresh:hover {
+.ik-refresh:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow:
     0 0 26px rgba(255, 74, 43, 0.42),
     inset 0 0 12px rgba(255, 74, 43, 0.12);
+}
+
+.ik-refresh:disabled {
+  cursor: wait;
 }
 
 .ik-refresh.is-busy svg {
@@ -350,5 +354,18 @@ ui-tabs-tab {
     width: 18px;
     height: 16px;
     font-size: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  /* The smallest phones keep the mindful chip and tabs; refresh lives in
+     Sources on this width. */
+  .ik-refresh {
+    display: none;
+  }
+
+  .ik-tabs button[data-slot="tabs-tab"] {
+    padding: 7px;
+    font-size: 11px;
   }
 }

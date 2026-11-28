@@ -13,7 +13,9 @@ const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self'",
-  "connect-src 'self'",
+  // Feeds are fetched directly from arbitrary HTTPS origins. The local proxy
+  // (next milestone) will need its own loopback entry here.
+  "connect-src 'self' https:",
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",

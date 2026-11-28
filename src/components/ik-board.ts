@@ -76,10 +76,7 @@ export class IkBoard extends IkElement {
           <div class="ik-empty">
             <span class="ik-empty__mark">[ EMPTY ]</span>
             <h2>Nothing on this board yet</h2>
-            <p>
-              Add a feed, or switch back to <strong>Board</strong> to see
-              everything.
-            </p>
+            <p>Add a feed in Sources to start reading.</p>
           </div>
         </div>
       `;

@@ -8,9 +8,15 @@ import "./ik-poster";
 export class IkCard extends IkElement {
   static properties = {
     article: { attribute: false },
+    imageFailed: { state: true },
   };
 
   article: Article | null = null;
+  imageFailed = false;
+
+  protected updated(changed: Map<PropertyKey, unknown>): void {
+    if (changed.has("article")) this.imageFailed = false;
+  }
 
   render(): TemplateResult | typeof nothing {
     const article = this.article;
@@ -34,8 +40,26 @@ export class IkCard extends IkElement {
         @click=${this.open}
         @keydown=${this.onKeydown}
       >
-        <div class="ik-card__media" style=${`--ik-aspect:${article.aspect}`}>
-          <ik-poster .article=${article}></ik-poster>
+        <div
+          class="ik-card__media"
+          data-has-image=${article.image && !this.imageFailed ? "true" : "false"}
+          style=${`--ik-aspect:${article.aspect}`}
+        >
+          ${
+            article.image && !this.imageFailed
+              ? html`
+                  <img
+                    class="ik-card__image"
+                    src=${article.image}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    referrerpolicy="no-referrer"
+                    @error=${this.onImageError}
+                  />
+                `
+              : html`<ik-poster .article=${article}></ik-poster>`
+          }
           <span class="ik-card__time">
             ${badgeClockIcon}
             <span>${relativeTime(article.publishedAt)}</span>
@@ -78,6 +102,10 @@ export class IkCard extends IkElement {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     this.open();
+  };
+
+  private onImageError = (): void => {
+    this.imageFailed = true;
   };
 }
 
