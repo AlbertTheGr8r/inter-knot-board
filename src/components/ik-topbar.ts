@@ -1,9 +1,10 @@
-import { html, nothing, type TemplateResult } from "lit";
+import { html, type TemplateResult } from "lit";
 import {
   createMindfulState,
   isMindfulEmpty,
   mindfulCapLabel,
   mindfulCapUnit,
+  mindfulMinutesLeft,
   mindfulRatio,
   mindfulRemainingLabel,
   type MindfulState,
@@ -24,8 +25,10 @@ export class IkTopbar extends IkElement {
 
   render(): TemplateResult {
     const ratio = mindfulRatio(this.mindful);
+    const minutesLeft = mindfulMinutesLeft(this.mindful);
     const empty = isMindfulEmpty(this.mindful);
-    const low = ratio <= 0.2;
+    const low = this.mindful.mode === "mindful" && minutesLeft <= 5;
+    const unlimited = this.mindful.mode === "unlimited";
 
     return html`
       <header class="ik-topbar">
@@ -60,7 +63,17 @@ export class IkTopbar extends IkElement {
                 aria-valuenow=${Math.round(ratio * 100)}
                 aria-label="Mindful reading time"
               >
-                <span style=${`width:${ratio * 100}%`}></span>
+                <span
+                  class="ik-profile__fill"
+                  style=${`width:${ratio * 100}%`}
+                ></span>
+                <span class="ik-profile__bar-label" aria-hidden="true">
+                  ${
+                    unlimited
+                      ? "∞"
+                      : `${minutesLeft}/${this.mindful.capMinutes}`
+                  }
+                </span>
               </span>
             </span>
             <span class="ik-profile__cap">
@@ -78,11 +91,6 @@ export class IkTopbar extends IkElement {
                 this.unread > 0 ? `Board, ${this.unread} unread` : "Board"
               }
             >
-              ${
-                this.unread > 0
-                  ? html`<span class="ik-tab-alert" aria-hidden="true">!</span>`
-                  : nothing
-              }
               <span>Board</span>
             </button>
           </ui-tabs-tab>
