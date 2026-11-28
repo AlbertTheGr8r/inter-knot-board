@@ -101,7 +101,7 @@ function headlineWord(title: string): string {
     words[0] ??
     "POST";
 
-  return picked.replace(/'/g, "").toUpperCase().slice(0, 9);
+  return picked.replace(/'/g, "").toUpperCase();
 }
 
 /**
