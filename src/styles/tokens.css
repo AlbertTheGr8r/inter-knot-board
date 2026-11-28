@@ -32,6 +32,40 @@
   --ik-font-display: "Anton", "Arial Narrow", sans-serif;
   --ik-font-ui: "Barlow", "Inter", system-ui, -apple-system, sans-serif;
 
+  /* Post reader: heavy Barlow with the reference's wide tracking and tight
+     leading. Sizes are tuned against the Bizarre Brigade reference post. */
+  --ik-post-font: var(--ik-font-ui);
+  --ik-post-title-size: 25px;
+  --ik-post-title-weight: 800;
+  --ik-post-title-tracking: 0.1em;
+  --ik-post-title-leading: 1.2;
+
+  --ik-post-body-size: 24px;
+  --ik-post-body-weight: 800;
+  --ik-post-body-tracking: 0.104em;
+  --ik-post-body-leading: 1.167;
+
+  --ik-post-meta-size: 16px;
+  --ik-post-meta-tracking: 0.09em;
+
+  --ik-post-comment-size: 25px;
+  --ik-post-comment-tracking: 0.04em;
+  --ik-post-comment-leading: 1.02;
+
+  --ik-post-header-size: 31px;
+  --ik-post-header-tracking: 0.07em;
+  --ik-post-date-size: 19px;
+
+  --ik-post-button-size: 20px;
+  --ik-post-button-tracking: 0.17em;
+  --ik-post-button-height: 57px;
+
+  --ik-post-pad: 14px;
+  --ik-post-gap: 14px;
+
+  --ik-post-rail-avatar: 56px;
+  --ik-post-rail-rule: 3px;
+
   --ik-shadow-card:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 18px 36px -18px rgba(0, 0, 0, 0.8);

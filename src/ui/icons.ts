@@ -44,6 +44,18 @@ export const chevronUpIcon = svg`
   </svg>
 `;
 
+export const triangleDownIcon = svg`
+  <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+    <path d="M3.2 5.2h9.6L8 11.2Z"></path>
+  </svg>
+`;
+
+export const triangleUpIcon = svg`
+  <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+    <path d="M3.2 10.8h9.6L8 4.8Z"></path>
+  </svg>
+`;
+
 export const penIcon = svg`
   <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
     <path d="m3 13 1-3.4L11.4 2.2a1.2 1.2 0 0 1 1.7 0l.7.7a1.2 1.2 0 0 1 0 1.7L6.4 12 3 13Z"></path>

@@ -14,13 +14,13 @@ import {
   chevronUpIcon,
   clockIcon,
   closeIcon,
-  externalIcon,
   heartIcon,
   infoIcon,
   lockIcon,
-  penIcon,
   starIcon,
   trashIcon,
+  triangleDownIcon,
+  triangleUpIcon,
 } from "../ui/icons";
 import "./ik-poster";
 
@@ -49,6 +49,7 @@ export class IkPostDialog extends IkElement {
     journalComposerOpen: { state: true },
     mediaCanScrollUp: { state: true },
     mediaCanScrollDown: { state: true },
+    contentOverflow: { state: true },
   };
 
   article: Article | null = null;
@@ -61,10 +62,13 @@ export class IkPostDialog extends IkElement {
   journalComposerOpen = false;
   mediaCanScrollUp = false;
   mediaCanScrollDown = false;
+  /** null until the clamped content has been measured. */
+  contentOverflow: boolean | null = null;
 
   private dialogEl: DialogElement | null = null;
   private mediaObserver?: ResizeObserver;
   private mediaFrame = 0;
+  private clampFrame = 0;
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -77,6 +81,8 @@ export class IkPostDialog extends IkElement {
     this.mediaObserver = undefined;
     if (this.mediaFrame) cancelAnimationFrame(this.mediaFrame);
     this.mediaFrame = 0;
+    if (this.clampFrame) cancelAnimationFrame(this.clampFrame);
+    this.clampFrame = 0;
     this.dialogEl?.removeEventListener("openchange", this.onDialogChange);
     super.disconnectedCallback();
   }
@@ -88,13 +94,24 @@ export class IkPostDialog extends IkElement {
   }
 
   protected updated(changed: Map<PropertyKey, unknown>): void {
-    if (
-      changed.has("article") ||
-      changed.has("journalEntries") ||
-      changed.has("rail") ||
-      changed.has("journalComposerOpen")
-    ) {
+    const layoutChanged = [
+      "article",
+      "journalEntries",
+      "rail",
+      "journalComposerOpen",
+      "expanded",
+    ].some((key) => changed.has(key));
+
+    if (layoutChanged) {
       this.scheduleMediaState();
+      if (this.contentOverflow !== null) this.contentOverflow = null;
+    }
+
+    if (
+      this.contentOverflow === null &&
+      (layoutChanged || changed.has("contentOverflow"))
+    ) {
+      this.scheduleClampState();
     }
   }
 
@@ -107,6 +124,7 @@ export class IkPostDialog extends IkElement {
     this.journalComposerOpen = false;
     this.mediaCanScrollUp = false;
     this.mediaCanScrollDown = false;
+    this.contentOverflow = null;
 
     const comments = article.comments ?? [];
     const entries = journalForArticle(this.journalEntries, article.id);
@@ -142,7 +160,12 @@ export class IkPostDialog extends IkElement {
     const hasJournal = entries.length > 0 || this.journalComposerOpen;
     const layout = postLayout(hasComments, hasJournal);
     const needsExpand = article.content.join(" ").length > 420;
-    const clamped = layout === "two" && needsExpand && !this.expanded;
+    const clampable = layout === "two" && needsExpand && !this.expanded;
+    const clamped = clampable && this.contentOverflow !== false;
+    const showExpand =
+      layout === "two" &&
+      needsExpand &&
+      (this.expanded || this.contentOverflow === true);
 
     return html`
       <div class="ik-post" data-layout=${layout}>
@@ -163,7 +186,7 @@ export class IkPostDialog extends IkElement {
                 <div class="ik-post__body" data-layout="three">
                   <section class="ik-post__post-card">
                     ${this.renderMedia(article)}
-                    ${this.renderContent(article, false, false)}
+                    ${this.renderContent(article, false, false, false)}
                   </section>
                   ${this.renderRail(article, comments, entries, hasComments, hasJournal)}
                 </div>
@@ -172,7 +195,7 @@ export class IkPostDialog extends IkElement {
                 <div class="ik-post__body" data-layout="two">
                   ${this.renderMedia(article)}
                   <section class="ik-post__content-card">
-                    ${this.renderContent(article, clamped, needsExpand)}
+                    ${this.renderContent(article, clamped, showExpand, true)}
                   </section>
                 </div>
               `
@@ -193,7 +216,7 @@ export class IkPostDialog extends IkElement {
         >
         <div class="ik-post__identity">
           <strong>${article.author}</strong>
-          <span>${posted}</span>
+          <span class="ik-post__date">${clockIcon}${posted}</span>
         </div>
         <div class="ik-post__actions">
           <button
@@ -278,10 +301,11 @@ export class IkPostDialog extends IkElement {
   private renderContent(
     article: Article,
     clamped: boolean,
-    needsExpand: boolean,
+    showExpand: boolean,
+    showJournal: boolean,
   ): TemplateResult {
     return html`
-      <div class="ik-post__content-scroll">
+      <div class=${`ik-post__content-scroll${clamped ? " is-collapsed" : ""}`}>
         <ui-dialog-title as-child>
           <h2 class="ik-post__title">
             <span class="ik-tag">[${article.tag}]</span>
@@ -294,27 +318,33 @@ export class IkPostDialog extends IkElement {
           <span>·</span> ${article.minutes} min read
         </p>
 
-        <div class=${`ik-post__content${clamped ? " is-clamped" : ""}`}>
+        <div class=${`ik-post__clamp${clamped ? " is-clamped" : ""}`}>
+          <div class=${`ik-post__content${clamped ? " is-clamped" : ""}`}>
+            ${
+              article.contentHtml
+                ? unsafeHTML(article.contentHtml)
+                : article.content
+                    .filter((paragraph) => paragraph.trim().length > 0)
+                    .map((paragraph) => html`<p>${paragraph}</p>`)
+            }
+          </div>
+
           ${
-            article.contentHtml
-              ? unsafeHTML(article.contentHtml)
-              : article.content.map((paragraph) => html`<p>${paragraph}</p>`)
+            showExpand
+              ? html`
+                  <button
+                    class="ik-post__expand"
+                    type="button"
+                    @click=${this.toggleExpanded}
+                  >
+                    ${this.expanded ? triangleUpIcon : triangleDownIcon}
+                    <span>${this.expanded ? "Collapse" : "Expand"}</span>
+                  </button>
+                `
+              : nothing
           }
         </div>
 
-        ${
-          needsExpand
-            ? html`
-                <button
-                  class="ik-post__expand"
-                  type="button"
-                  @click=${this.toggleExpanded}
-                >
-                  ${this.expanded ? "Collapse" : "Read more"}
-                </button>
-              `
-            : nothing
-        }
         ${
           article.quoted
             ? html`
@@ -357,7 +387,7 @@ export class IkPostDialog extends IkElement {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Open original ${externalIcon}
+                    Open original
                   </a>
                 `
               : html`
@@ -365,21 +395,23 @@ export class IkPostDialog extends IkElement {
                     class="ik-post__original is-disabled"
                     title="This post has no original link"
                   >
-                    Open original ${externalIcon}
+                    Open original
                   </span>
                 `
           }
-          <button
-            class="ik-post__journal"
-            type="button"
-            @click=${this.openJournal}
-          >
-            <span class="ik-post__journal-icon">${penIcon}</span>
-            <span>
-              <strong>Write to Journal</strong>
-              <small>Private field log</small>
-            </span>
-          </button>
+          ${
+            showJournal
+              ? html`
+                  <button
+                    class="ik-post__journal"
+                    type="button"
+                    @click=${this.openJournal}
+                  >
+                    Write to Journal
+                  </button>
+                `
+              : nothing
+          }
         </div>
       </div>
     `;
@@ -397,57 +429,57 @@ export class IkPostDialog extends IkElement {
 
     return html`
       <aside class="ik-post__rail" aria-label="Post discussion and journal">
-        <header class="ik-post__rail-head">
-          ${
-            hasComments && hasJournal
-              ? html`
-                  <div
-                    class="ik-post__rail-tabs"
-                    role="tablist"
-                    aria-label="Comments and journal"
-                  >
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected=${rail === "comments" ? "true" : "false"}
-                      @click=${() => this.setRail("comments")}
-                    >
-                      Comments <span>${comments.length}</span>
-                    </button>
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected=${rail === "journal" ? "true" : "false"}
-                      @click=${() => this.setRail("journal")}
-                    >
-                      ${lockIcon} Journal <span>${entries.length}</span>
-                    </button>
-                  </div>
-                `
-              : html`
-                  <h3>
-                    ${
-                      rail === "journal"
-                        ? "Journal"
-                        : `Comments · ${comments.length}`
-                    }
-                  </h3>
+        ${
+          hasJournal
+            ? html`
+                <header class="ik-post__rail-head">
                   ${
-                    rail === "journal"
-                      ? html`<span class="ik-post__private">
-                          ${lockIcon} Private field log
-                        </span>`
-                      : nothing
+                    hasComments
+                      ? html`
+                          <div
+                            class="ik-post__rail-tabs"
+                            role="tablist"
+                            aria-label="Comments and journal"
+                          >
+                            <button
+                              type="button"
+                              role="tab"
+                              aria-selected=${
+                                rail === "comments" ? "true" : "false"
+                              }
+                              @click=${() => this.setRail("comments")}
+                            >
+                              Comments <span>${comments.length}</span>
+                            </button>
+                            <button
+                              type="button"
+                              role="tab"
+                              aria-selected=${
+                                rail === "journal" ? "true" : "false"
+                              }
+                              @click=${() => this.setRail("journal")}
+                            >
+                              ${lockIcon} Journal <span>${entries.length}</span>
+                            </button>
+                          </div>
+                        `
+                      : html`
+                          <h3>Journal</h3>
+                          <span class="ik-post__private">
+                            ${lockIcon} Private field log
+                          </span>
+                        `
                   }
-                `
-          }
-        </header>
+                </header>
+              `
+            : nothing
+        }
 
         <div class="ik-post__rail-scroll">
           ${
             rail === "journal"
               ? this.renderJournalEntries(entries)
-              : this.renderComments(comments)
+              : this.renderComments(comments, entries)
           }
         </div>
 
@@ -462,6 +494,7 @@ export class IkPostDialog extends IkElement {
 
   private renderComments(
     comments: NonNullable<Article["comments"]>,
+    entries: JournalEntry[],
   ): TemplateResult {
     if (comments.length === 0) {
       return html`<p class="ik-post__rail-empty">No comments yet.</p>`;
@@ -483,13 +516,24 @@ export class IkPostDialog extends IkElement {
                   <span class="ik-post__floor">${index + 1}F</span>
                 </header>
                 <p>${comment.text}</p>
+                <span class="ik-post__likes">
+                  ${heartIcon}${compactNumber(comment.likes)}
+                </span>
               </div>
-              <span class="ik-post__likes">
-                ${heartIcon}${compactNumber(comment.likes)}
-              </span>
             </article>
           `,
         )}
+      </div>
+
+      <div class="ik-post__rail-footer">
+        <p class="ik-post__rail-end">– No more comments –</p>
+        <button
+          class="ik-post__journal ik-post__rail-action"
+          type="button"
+          @click=${this.openJournal}
+        >
+          ${entries.length > 0 ? "Write more entries" : "Write to Journal"}
+        </button>
       </div>
     `;
   }
@@ -539,6 +583,21 @@ export class IkPostDialog extends IkElement {
                 )}
               </div>
             `
+      }
+      ${
+        entries.length > 0 && !this.journalComposerOpen
+          ? html`
+              <div class="ik-post__rail-footer">
+                <button
+                  class="ik-post__journal ik-post__rail-action"
+                  type="button"
+                  @click=${this.openJournal}
+                >
+                  Write more entries
+                </button>
+              </div>
+            `
+          : nothing
       }
     `;
   }
@@ -664,6 +723,8 @@ export class IkPostDialog extends IkElement {
 
   private onResize = (): void => {
     this.scheduleMediaState();
+    this.contentOverflow = null;
+    this.scheduleClampState();
   };
 
   private resetMediaScroll(): void {
@@ -679,6 +740,24 @@ export class IkPostDialog extends IkElement {
       this.observeMedia();
       this.syncMediaState();
     });
+  }
+
+  private scheduleClampState(): void {
+    if (this.clampFrame) cancelAnimationFrame(this.clampFrame);
+    this.clampFrame = requestAnimationFrame(() => {
+      this.clampFrame = 0;
+      this.measureClamp();
+    });
+  }
+
+  private measureClamp(): void {
+    const content = this.querySelector<HTMLElement>(
+      ".ik-post__content.is-clamped",
+    );
+    if (!content) return;
+
+    const overflows = content.scrollHeight > content.clientHeight + 1;
+    if (this.contentOverflow !== overflows) this.contentOverflow = overflows;
   }
 
   private observeMedia(): void {
