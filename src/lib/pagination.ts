@@ -18,7 +18,7 @@ export interface BatchSizeOptions {
 
 export const DEFAULT_SCREENS = 5;
 export const MIN_BATCH = 8;
-export const MAX_BATCH = 60;
+export const MAX_BATCH = 96;
 
 export function computeBatchSize({
   columns,

@@ -7,6 +7,17 @@ export const clockIcon = svg`
   </svg>
 `;
 
+/**
+ * The card badge is a clock, not an eye. It keeps the heavy circular weight
+ * of the reference's view badge so the top-left corner still reads the same.
+ */
+export const badgeClockIcon = svg`
+  <svg viewBox="0 0 34 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="17" cy="17" r="12.4" stroke-width="5.6"></circle>
+    <path d="M17 9.8V17l5.7 3.7" stroke-width="5.2"></path>
+  </svg>
+`;
+
 export const refreshIcon = svg`
   <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M20 11a8 8 0 1 0-2.3 5.7"></path>

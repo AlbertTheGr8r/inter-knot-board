@@ -2,7 +2,7 @@ import { html, nothing, type TemplateResult } from "lit";
 import type { Article } from "../data/types";
 import { initials, relativeTime } from "../lib/format";
 import { IkElement } from "../ui/base";
-import { clockIcon } from "../ui/icons";
+import { badgeClockIcon } from "../ui/icons";
 import "./ik-poster";
 
 export class IkCard extends IkElement {
@@ -25,46 +25,34 @@ export class IkCard extends IkElement {
       <article
         class="ik-card"
         data-article-id=${article.id}
+        data-read=${article.unread ? "false" : "true"}
         tabindex="0"
         role="button"
-        aria-label=${`Open post: ${article.title}`}
+        aria-label=${`Open post: ${article.title}. Posted ${relativeTime(
+          article.publishedAt,
+        )}.`}
         @click=${this.open}
         @keydown=${this.onKeydown}
       >
         <div class="ik-card__media" style=${`--ik-aspect:${article.aspect}`}>
           <ik-poster .article=${article}></ik-poster>
           <span class="ik-card__time">
-            ${clockIcon}
+            ${badgeClockIcon}
             <span>${relativeTime(article.publishedAt)}</span>
           </span>
-          ${
-            article.unread
-              ? html`<span class="ik-card__sticker">NEW</span>`
-              : nothing
-          }
-          ${
-            article.picked
-              ? html`<span class="ik-card__pick">PICK</span>`
-              : nothing
-          }
-          <div class="ik-card__op">
-            <span
-              class="ik-avatar"
-              style=${`--ik-avatar:${article.authorColor}`}
-              >${initials(article.author)}</span
-            >
-            <span class="ik-card__opname">${article.author}</span>
-          </div>
+        </div>
+
+        <div class="ik-card__info">
+          <span
+            class="ik-avatar ik-avatar--card"
+            style=${`--ik-avatar:${article.authorColor}`}
+            >${initials(article.author)}</span
+          >
+          <span class="ik-card__author">${article.author}</span>
+          <i class="ik-card__rule" aria-hidden="true"></i>
         </div>
 
         <div class="ik-card__body">
-          <div class="ik-card__source">
-            <span
-              class="ik-card__source-mark"
-              style=${`--ik-source:${article.feedColor}`}
-            ></span>
-            <span>${article.feedTitle}</span>
-          </div>
           <p class="ik-card__title">
             <span class=${tagClass}>[${article.tag}]</span>
             ${article.title}

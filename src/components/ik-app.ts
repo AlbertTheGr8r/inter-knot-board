@@ -27,7 +27,6 @@ import {
   saveReadOnScroll,
 } from "../lib/preferences";
 import { IkElement } from "../ui/base";
-import { chevronDownIcon } from "../ui/icons";
 import "./ik-board";
 import "./ik-history";
 import "./ik-post-dialog";
@@ -198,7 +197,7 @@ export class IkApp extends IkElement {
       <details class="ik-filter">
         <summary class="ik-filter__button">
           <span>${this.filterLabel}</span>
-          ${chevronDownIcon}
+          <i class="ik-filter__chev" aria-hidden="true"></i>
         </summary>
 
         <div class="ik-filter__menu">
@@ -233,7 +232,7 @@ export class IkApp extends IkElement {
               aria-selected=${this.sourceFilter === null ? "true" : "false"}
               @click=${() => this.setSource(null)}
             >
-              <span class="ik-filter__source-name">All sources</span>
+              <span class="ik-filter__source-name">All Feeds</span>
               ${
                 this.sourceFilter === null
                   ? html`<span class="ik-filter__check">✓</span>`
@@ -368,9 +367,11 @@ export class IkApp extends IkElement {
       );
     }
 
+    if (this.scope === "all") return "All Feeds";
+
     return (
       SCOPE_OPTIONS.find((option) => option.value === this.scope)?.label ??
-      "All"
+      "All Feeds"
     );
   }
 

@@ -1,5 +1,6 @@
 import { html, type TemplateResult } from "lit";
 import type { Article } from "../data/types";
+import { columnCountForWidth } from "../lib/board-layout";
 import {
   computeBatchSize,
   DEFAULT_SCREENS,
@@ -114,8 +115,9 @@ export class IkBoard extends IkElement {
    * The app uses this for both the first page and each Load more click.
    */
   getBatchSize(screens = DEFAULT_SCREENS): number {
-    const width = this.clientWidth || window.innerWidth;
-    const columns = this.columnsForWidth(width);
+    const { width, gap } = this.contentMetrics();
+    const columns = columnCountForWidth(width, gap);
+    const cardWidth = (width - (columns - 1) * gap) / columns;
     const viewport = Math.max(
       360,
       (window.visualViewport?.height ?? window.innerHeight) - 110,
@@ -128,51 +130,78 @@ export class IkBoard extends IkElement {
       heights.length > 0
         ? heights.reduce((sum, height) => sum + height, 0) / heights.length
         : this.articles[0]
-          ? this.estimate(this.articles[0])
+          ? this.estimate(this.articles[0], cardWidth)
           : 420;
 
     return computeBatchSize({
       columns,
       viewportHeight: viewport,
       averageCardHeight,
-      gap: 16,
+      gap,
       screens,
       min: MIN_BATCH,
       max: MAX_BATCH,
     });
   }
 
-  private columnsForWidth(width: number): number {
-    return width >= 1480 ? 4 : width >= 1080 ? 3 : width >= 720 ? 2 : 1;
+  private contentMetrics(): { width: number; gap: number } {
+    const board = this.querySelector<HTMLElement>(".ik-board");
+    if (!board) {
+      return { width: this.clientWidth || window.innerWidth, gap: 24 };
+    }
+
+    const style = getComputedStyle(board);
+    const width =
+      board.clientWidth -
+      (parseFloat(style.paddingLeft) || 0) -
+      (parseFloat(style.paddingRight) || 0);
+
+    return {
+      width: Math.max(0, width),
+      gap: parseFloat(style.columnGap) || 24,
+    };
   }
 
   private layout(): void {
-    const width = this.clientWidth;
+    const { width, gap } = this.contentMetrics();
     if (!width || this.articles.length === 0) return;
 
-    const count = this.columnsForWidth(width);
-
+    const count = columnCountForWidth(width, gap);
+    const cardWidth = (width - (count - 1) * gap) / count;
     const columns = Array.from({ length: count }, (): Article[] => []);
     const heights = new Array<number>(count).fill(0);
 
-    for (const article of this.articles) {
+    // Keep the first two bands in feed order, then balance the rest.
+    const seed = Math.min(count * 2, this.articles.length);
+    for (let index = 0; index < seed; index += 1) {
+      const column = index % count;
+      const article = this.articles[index]!;
+      columns[column]!.push(article);
+      heights[column]! += this.estimate(article, cardWidth);
+    }
+
+    for (let index = seed; index < this.articles.length; index += 1) {
       let target = 0;
-      for (let index = 1; index < count; index += 1) {
-        if (heights[index]! < heights[target]!) target = index;
+      for (let column = 1; column < count; column += 1) {
+        if (heights[column]! < heights[target]!) target = column;
       }
+      const article = this.articles[index]!;
       columns[target]!.push(article);
-      heights[target]! += this.estimate(article);
+      heights[target]! += this.estimate(article, cardWidth);
     }
 
     if (this.sameLayout(columns)) return;
     this.columns = columns;
   }
 
-  private estimate(article: Article): number {
-    const mediaHeight = 330 / Math.max(0.6, article.aspect);
-    const titleLines = Math.min(3, Math.ceil(article.title.length / 27));
-    const excerptLines = Math.min(2, Math.ceil(article.excerpt.length / 36));
-    return mediaHeight + 58 + titleLines * 20 + excerptLines * 16;
+  private estimate(article: Article, cardWidth: number): number {
+    const mediaHeight = cardWidth / Math.max(0.6, article.aspect);
+    const infoHeight = cardWidth * 0.12;
+    const titleLines = Math.min(4, Math.ceil(article.title.length / 27));
+    const titleHeight = titleLines * cardWidth * 0.09;
+    const excerptHeight = cardWidth * 0.081;
+    const bodyPadding = cardWidth * 0.07;
+    return mediaHeight + infoHeight + titleHeight + excerptHeight + bodyPadding;
   }
 
   private sameLayout(next: Article[][]): boolean {

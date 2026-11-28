@@ -16,13 +16,13 @@ ui-tabs-panel[hidden] {
 }
 
 .ik-board {
+  --ik-gap: clamp(24px, 2.33vw, 56px);
   display: flex;
   align-items: flex-start;
   gap: var(--ik-gap);
   width: 100%;
-  max-width: 1880px;
   margin: 0 auto;
-  padding: 0 26px 24px;
+  padding: clamp(6px, 0.8vw, 12px) clamp(24px, 5vw, 120px) 24px;
 }
 
 ui-tabs-panel[value="saved"] .ik-board {
@@ -40,20 +40,17 @@ ui-tabs-panel[value="saved"] .ik-board {
 .ik-card {
   position: relative;
   overflow: hidden;
-  border-radius: var(--ik-radius);
-  background: var(--ik-surface-2);
-  box-shadow: var(--ik-shadow-card);
+  container-type: inline-size;
+  border: 5px solid #000;
+  border-radius: clamp(20px, 2.2vw, 32px) clamp(20px, 2.2vw, 32px) 0
+    clamp(20px, 2.2vw, 32px);
+  background: #222;
   cursor: pointer;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
+  transition: border-color 0.18s ease;
 }
 
 .ik-card:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 24px 50px -24px rgba(0, 0, 0, 0.95),
-    0 0 0 1px rgba(241, 216, 10, 0.25);
+  border-color: #b2b2b0;
 }
 
 .ik-card:focus-visible {
@@ -65,7 +62,7 @@ ui-tabs-panel[value="saved"] .ik-board {
   position: relative;
   aspect-ratio: var(--ik-aspect, 1.2);
   overflow: hidden;
-  background: #111;
+  background: #191919;
 }
 
 .ik-card__media > ik-poster {
@@ -78,146 +75,117 @@ ui-tabs-panel[value="saved"] .ik-board {
   display: block;
   width: 100%;
   height: 100%;
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.ik-card:hover .ik-card__media svg {
-  transform: scale(1.035);
-}
-
-.ik-card__media::after {
-  content: "";
-  position: absolute;
-  inset: 42% 0 0;
-  z-index: 1;
-  background: linear-gradient(transparent, rgba(5, 5, 6, 0.86) 88%);
-  pointer-events: none;
 }
 
 .ik-card__time {
   position: absolute;
-  top: 10px;
-  left: 11px;
+  top: 3.4cqw;
+  left: 3.6cqw;
   z-index: 2;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2.1cqw;
   color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.9);
+  font-style: italic;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.7);
 }
 
 .ik-card__time svg {
-  width: 12px;
-  height: 12px;
+  flex: 0 0 auto;
+  width: 9.5cqw;
+  height: 9.5cqw;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
 }
 
-.ik-card__sticker {
-  position: absolute;
-  top: 9px;
-  right: 9px;
-  z-index: 2;
-  padding: 3px 7px;
-  border-radius: 4px;
-  background: var(--ik-red-bright);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  transform: rotate(3deg);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
-}
-
-.ik-card__pick {
-  position: absolute;
-  top: 36px;
-  right: 9px;
-  z-index: 2;
-  padding: 2px 6px;
-  border: 1px solid rgba(107, 208, 255, 0.45);
-  border-radius: 4px;
-  background: rgba(107, 208, 255, 0.14);
-  color: var(--ik-blue);
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-}
-
-.ik-card__op {
-  position: absolute;
-  right: 11px;
-  bottom: 9px;
-  left: 11px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #fff;
-  font-size: 11.5px;
+.ik-card__time > span:last-child {
+  font-size: 9.4cqw;
   font-weight: 800;
-  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.9);
+  letter-spacing: 0.03em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.ik-card__opname {
+.ik-card__info {
+  position: relative;
+  background: #222;
+}
+
+.ik-avatar--card {
+  position: absolute;
+  bottom: 0;
+  left: 4.2cqw;
+  z-index: 3;
+  width: 23.5cqw;
+  height: 23.5cqw;
+  border: 0.55cqw solid #222;
+  font-size: 7.5cqw;
+}
+
+.ik-card__author {
+  display: block;
+  margin: 0 4.2cqw 0 calc(4.2cqw + 23.5cqw + 2.9cqw);
+  padding: 1.2cqw 0 2.4cqw;
   overflow: hidden;
+  color: #636363;
+  font-size: 7.05cqw;
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: 0.14em;
   text-overflow: ellipsis;
+  text-transform: uppercase;
   white-space: nowrap;
+}
+
+.ik-card__rule {
+  position: absolute;
+  right: 4.2cqw;
+  bottom: 0;
+  left: calc(4.2cqw + 23.5cqw + 2.9cqw);
+  height: 0.5cqw;
+  background: #353535;
 }
 
 .ik-card__body {
-  padding: 10px 13px 14px;
-}
-
-.ik-card__source {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  margin-bottom: 6px;
-  color: var(--ik-muted);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.ik-card__source > span:last-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ik-card__source-mark {
-  flex: 0 0 auto;
-  width: 6px;
-  height: 6px;
-  border-radius: 2px;
-  background: var(--ik-source, var(--ik-muted));
-  box-shadow: 0 0 8px color-mix(in srgb, var(--ik-source) 55%, transparent);
+  position: relative;
+  z-index: 2;
+  padding: 2.6cqw 4.2cqw 4.4cqw 7.7cqw;
+  background: #222;
 }
 
 .ik-card__title {
-  display: -webkit-box;
-  overflow: hidden;
   margin: 0;
-  font-size: 15px;
+  color: #9a9a9a;
+  font-size: 7.42cqw;
+  font-style: italic;
   font-weight: 800;
-  line-height: 1.28;
-  letter-spacing: -0.005em;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  line-height: 1.21;
+  letter-spacing: 0.065em;
+}
+
+.ik-card[data-read="false"] .ik-card__title {
+  color: #fff;
+}
+
+.ik-card__title .ik-tag {
+  color: inherit;
+}
+
+.ik-card__title .ik-tag--urgent {
+  color: var(--ik-red-bright);
 }
 
 .ik-card__excerpt {
-  display: -webkit-box;
   overflow: hidden;
-  margin: 7px 0 0;
-  color: var(--ik-muted);
-  font-size: 12.5px;
-  line-height: 1.35;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  margin: 1.05cqw 0 0;
+  color: #b3b3b1;
+  font-size: 6.7cqw;
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ik-board-foot {
@@ -226,9 +194,8 @@ ui-tabs-panel[value="saved"] .ik-board {
   align-items: center;
   gap: 9px;
   width: 100%;
-  max-width: 1880px;
   margin: 0 auto;
-  padding: 10px 26px 110px;
+  padding: 10px clamp(24px, 5vw, 120px) 110px;
 }
 
 .ik-board-foot__button {
@@ -321,16 +288,11 @@ ik-app.is-compact .ik-board {
 }
 
 ik-app.is-compact .ik-card__body {
-  padding: 9px 10px 10px;
+  padding-bottom: 2.6cqw;
 }
 
 ik-app.is-compact .ik-card__excerpt {
   display: none;
-}
-
-ik-app.is-compact .ik-card__title {
-  font-size: 14px;
-  -webkit-line-clamp: 2;
 }
 
 ik-app.is-syncing .ik-board {
@@ -342,27 +304,49 @@ ik-app.is-syncing .ik-board {
    pinned scope group, with All nearest the pill. */
 .ik-filter {
   position: fixed;
-  right: 26px;
-  bottom: 22px;
+  right: clamp(14px, 1.8vw, 32px);
+  bottom: clamp(14px, 1.6vw, 26px);
   z-index: 40;
+  width: clamp(260px, 21vw, 360px);
 }
 
 .ik-filter__button {
   display: flex;
   align-items: center;
-  gap: 12px;
-  max-width: min(260px, 70vw);
-  padding: 10px 16px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: clamp(11px, 0.95vw, 16px) clamp(18px, 1.4vw, 26px);
+  border: 4px solid #5b5b5b;
   border-radius: 999px;
-  background: #f3f1ea;
-  color: #101012;
-  font-size: 13px;
+  background-color: #0e0e0e;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.06) 0 1px,
+      transparent 1px 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.035) 0 1px,
+      transparent 1px 4px
+    );
+  color: #fff;
+  font-size: clamp(19px, 1.4vw, 27px);
+  font-style: italic;
   font-weight: 800;
+  letter-spacing: 0.05em;
+  line-height: 1;
   cursor: pointer;
   list-style: none;
   user-select: none;
-  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.75);
+  box-shadow:
+    inset 0 0 0 1px #000,
+    0 8px 22px rgba(0, 0, 0, 0.5);
+}
+
+.ik-filter__button:hover {
+  border-color: #888;
 }
 
 .ik-filter__button > span {
@@ -375,24 +359,27 @@ ik-app.is-syncing .ik-board {
   display: none;
 }
 
-.ik-filter__button svg {
+.ik-filter__chev {
   flex: 0 0 auto;
-  width: 14px;
-  height: 14px;
-  transition: transform 0.16s ease;
+  width: 0;
+  height: 0;
+  border-right: clamp(7px, 0.55vw, 10px) solid transparent;
+  border-left: clamp(7px, 0.55vw, 10px) solid transparent;
+  border-top: clamp(8px, 0.65vw, 12px) solid #fff;
+  transition: transform 0.18s ease;
 }
 
-.ik-filter[open] .ik-filter__button svg {
+.ik-filter[open] .ik-filter__chev {
   transform: rotate(180deg);
 }
 
 .ik-filter__menu {
   position: absolute;
   right: 0;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + 8px);
+  left: 0;
   display: flex;
   flex-direction: column;
-  width: min(292px, calc(100vw - 28px));
   max-height: min(70vh, 520px);
   overflow: hidden;
   border: 1px solid var(--ik-line-strong);
@@ -490,9 +477,11 @@ ik-app.is-syncing .ik-board {
   font-size: 11px;
 }
 
-@media (max-width: 1180px) {
-  .ik-board {
-    padding-inline: 18px;
+@media (max-width: 900px) {
+  .ik-filter {
+    right: 14px;
+    left: 14px;
+    width: auto;
   }
 }
 
@@ -502,7 +491,7 @@ ik-app.is-syncing .ik-board {
   }
 
   .ik-board {
-    padding: 0 12px 18px;
+    padding: 0 clamp(18px, 5vw, 24px) 18px;
   }
 
   ui-tabs-panel[value="saved"] .ik-board {
@@ -510,16 +499,15 @@ ik-app.is-syncing .ik-board {
   }
 
   .ik-board-foot {
-    padding: 8px 12px 92px;
+    padding: 8px clamp(18px, 5vw, 24px) 92px;
   }
 
   .ik-filter {
-    right: 14px;
     bottom: 14px;
   }
 
   .ik-filter__button {
-    padding: 9px 13px;
-    font-size: 12px;
+    padding: 11px 18px;
+    font-size: 19px;
   }
 }
