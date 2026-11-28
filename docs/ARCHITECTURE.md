@@ -39,7 +39,7 @@ can be replaced without touching the design layer.
 | `<ik-app>`         | Owns articles, section, scope, source filter, opened/saved state, timer, pagination. |
 | `<ik-topbar>`      | Refresh control, mindful cap chip, `Board`/`Saved`/`Sources`/`History`.              |
 | `<ik-board>`       | Masonry layout, adaptive batch size, optional read-on-scroll observer.               |
-| `<ik-card>`        | One post: media, time badge, source mark, tag, title, excerpt.                       |
+| `<ik-card>`        | One post: media, clock/time badge, author strip, tag, title, preview.                |
 | `<ik-poster>`      | Deterministic SVG/CSS poster for posts without a photo.                              |
 | `<ik-post-dialog>` | Post reader over the blurred board; save, comments, quote, system note.              |
 | `<ik-sources>`     | Source management shell; direct RSS fills it next.                                   |
@@ -158,7 +158,11 @@ request.
   grain, and UI SDK parts share one stylesheet. There is no shadow-root theming
   layer to maintain.
 - **Masonry.** CSS columns are avoided because they break reading order. The
-  board is a flex row of flex columns, filled by estimated height.
+  board is a flex row of flex columns. The first two bands are seeded in feed
+  order, then the rest of the cards balance toward the shortest column.
+- **Columns.** The board targets a 380px card, caps a column at 400px, and
+  allows up to eight columns on very wide displays. `columnCountForWidth()`
+  keeps the layout and pagination in sync.
 - **Pagination.** The board measures its column count, viewport, and rendered
   card heights, then asks `computeBatchSize()` for roughly five screens of cards.
   The app keeps a `limit`; there is no scroll-triggered auto-load.
@@ -177,7 +181,7 @@ request.
 
 - Vitest covers deterministic helpers (`hashString`, `mulberry32`,
   `relativeTime`, `initials`, mindful timer math, adaptive batch size,
-  scope/source filtering, and full-card visibility).
+  scope/source filtering, column counts, and full-card visibility).
 - The planned parser suite uses fixtures for RSS 2.0, Atom, RDF, JSON Feed,
   malformed XML, relative URLs, and entity-expansion attempts.
 - The planned proxy suite covers URL validation and private-IP blocking.

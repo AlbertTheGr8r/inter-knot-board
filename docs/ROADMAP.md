@@ -24,7 +24,8 @@ Shipped after the first UI demo.
 - Adaptive `Load more` at roughly five board viewports; no infinite scroll.
 - Opening a post marks it read, files it in History, and allows saving.
 - Opt-in read-on-scroll with a full-card dwell.
-- Source identity on cards; Proxy sheet for preferences.
+- Reference card composition with clock/time badge and Barlow; source identity
+  stays in the filter and dialog. Proxy sheet for preferences.
 - Red tab alerts use the game's warning triangle.
 
 ## v0.2.0 — feed core

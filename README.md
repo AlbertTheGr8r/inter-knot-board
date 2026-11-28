@@ -41,9 +41,9 @@ it stays a queue.
 
 ## What works today
 
-- Order-preserving masonry: 4 → 3 → 2 → 1 columns.
-- Post cards with relative time, unread/new markers, source identity, tag, title,
-  excerpt.
+- Order-preserving masonry: 1 → 2 → 3 → 4 → 5 → 8 columns, depending on width.
+- Post cards with a clock/time badge, read-state title color, author strip, tag,
+  title, and a one-line preview.
 - Deterministic generated posters for posts without images (8 palettes, 5
   patterns) — no grey placeholders.
 - Post dialog: blurred backdrop, source bar, save toggle, red close button,
